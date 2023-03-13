@@ -7,9 +7,6 @@
 ![](Laranja/Screenshots/Screenshot1.png)
 
 
-My Qr code , thank you very much ...
-
-![](Laranja/Screenshots/code.png)
 <p>--Alpha Version-
     
 </p>
