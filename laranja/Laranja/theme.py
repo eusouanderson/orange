@@ -9,7 +9,7 @@ redcolor = '#ff0000'
 brcolor = '#ffffff'
 def theme():
     color = [orcolor, vicolor, rubcolor, redcolor, brcolor]
-    backcolor = color[randint(0, 5)]
+    backcolor = color[randint(0, 4)]
     return backcolor
 
 def font(model=0, value=0):

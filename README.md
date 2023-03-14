@@ -1,13 +1,12 @@
 # <tittle> Laranja </tittle> :orange:
-<h1>Program to optimize and speed up PC performance in games.</h1>
+## Program to optimize and speed up PC performance in games.
 
 
-![](Laranja/Screenshots/Screenshot2.png)
-![](Laranja/Screenshots/Screenshot3.png)
-![](Laranja/Screenshots/Screenshot1.png)
+![](laranja/Laranja/Screenshots/Screenshot2.png)
+![](laranja/Laranja/Screenshots/Screenshot1.png)
 
 
-<p>--Alpha Version-
+### -Alpha Version-
     
 </p>
 

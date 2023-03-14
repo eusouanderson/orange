@@ -16,7 +16,7 @@ class Software:
 
         self.color = theme()
         self.ws = Tk()
-        self.ws.title('Laranja')
+        self.ws.title('Orange')
 
         width = 600 #self.ws.winfo_screenwidth() - 500
         height = self.ws.winfo_screenheight() - 100
@@ -64,8 +64,9 @@ class Software:
             command= ''
         )
 
-        self.icon = PhotoImage(master=self.ws, file='Screenshots/orange.png')
-        self.img = PhotoImage(file='Screenshots/orange.png')
+        self.icon = PhotoImage(master=self.ws, file='laranja/Laranja/Screenshots/orange.png')
+
+        self.img = PhotoImage(file='laranja/Laranja/Screenshots/orange.png')
 
         self.img1 = Label(self.ws, image=self.img, bg=self.color)
         self.img1.pack()
