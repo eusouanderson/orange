@@ -4,13 +4,15 @@ from psutil import cpu_freq, cpu_count, Process, pids, process_iter
 import matplotlib.pyplot as plt
 import numpy as np
 from clean import clean
-from theme import theme, font, brcolor, darkcolor
+from theme import theme, brcolor, darkcolor
 
 
 class Software:
-
     def __init__(self):
-
+        self.numero_cpu = cpu_count()
+        self.frequencia_cpu = cpu_freq().current
+        self.todosProcessos = pids()
+        self.processos = Process()
         self.colorL = brcolor
         self.colorB = darkcolor
 
@@ -18,34 +20,24 @@ class Software:
         self.ws = Tk()
         self.ws.title('Orange')
 
-        width = 600 #self.ws.winfo_screenwidth() - 500
+        width = self.ws.winfo_screenwidth() - 500
         height = self.ws.winfo_screenheight() - 100
         self.ws.geometry('%dx%d' % (width, height))
         self.ws.overrideredirect(False)
-        self.ws.attributes('-transparentcolor', 'blue', '-alpha', 5)
+        "self.ws.attributes('-transparentcolor', 'blue', '-alpha', 5)"
 
-        '''Menubar'''
+        """Menubar"""
         self.menubar = Menu(self.ws)
         self.ws.config(menu=self.menubar)
 
         file_menu = Menu(self.menubar, tearoff=False)
         help_menu = Menu(self.menubar, tearoff=False)
 
-        file_menu.add_command(
-            label='Novo', command=''
-        )
-        file_menu.add_command(
-            label='Abrir', command=''
-        )
-        file_menu.add_command(
-            label='Iniciar', command=''
-        )
-        file_menu.add_command(
-            label='Salvar', command=''
-        )
-        file_menu.add_command(
-            label='PrintScreen', command=''
-        )
+        file_menu.add_command(label='Novo', command='')
+        file_menu.add_command(label='Abrir', command='')
+        file_menu.add_command(label='Iniciar', command='')
+        file_menu.add_command(label='Salvar', command='')
+        file_menu.add_command(label='PrintScreen', command='')
         file_menu.add_separator()
 
         file_menu.add_command(
@@ -53,25 +45,12 @@ class Software:
             command=self.ws.destroy,
         )
 
-        self.menubar.add_cascade(
-            label='Arquivo',
-            menu=file_menu,
-            command=''
-        )
-        self.menubar.add_cascade(
-            label='Temas',
-            menu=help_menu,
-            command= ''
-        )
-
-        self.icon = PhotoImage(master=self.ws, file='laranja/Laranja/Screenshots/orange.png')
-
-        self.img = PhotoImage(file='laranja/Laranja/Screenshots/orange.png')
-
-        self.img1 = Label(self.ws, image=self.img, bg=self.color)
+        self.menubar.add_cascade(label='Arquivo', menu=file_menu, command='')
+        self.menubar.add_cascade(label='Temas', menu=help_menu, command='')
+        self.img1 = Label(self.ws, bg=self.color)
         self.img1.pack()
 
-        self.ws.wm_iconphoto(True, self.icon)
+        'self.ws.wm_iconphoto(True)'
         self.ws.config(bg=self.color)
         self.ws.update()
 
@@ -103,7 +82,6 @@ class Software:
         self.bto2['text'] = 'Grafico'
         self.bto2['command'] = self.graphic
         self.bto2.grid(row=0, column=1)
-
 
         self.bto3 = Button(
             self.widget,
@@ -165,7 +143,6 @@ class Software:
             borderwidth=4,
             width=10,
             fg=self.colorL,
-
         )
         self.bto7['text'] = 'Theme'
         self.bto7['command'] = theme
@@ -190,30 +167,20 @@ class Software:
         self.msg['text'] = 'Processos abertos'
         self.msg['font'] = font
         self.msg.place(x=20, y=140)
-
-        self.numero_cpu = cpu_count()
-        self.frequencia_cpu = cpu_freq().current
-        self.todosProcessos = pids()
-        self.processos = Process()
         self.processos.parent()
         self.processos = len(self.todosProcessos)
-
         self.msg = Label(self.ws, text=self.numero_cpu, bg=self.color)
         self.msg['font'] = ('BungeeSpice Regular', '10', 'italic')
         self.msg.place(x=40, y=80)
-
         self.msg = Label(self.ws, text=self.frequencia_cpu, bg=self.color)
         self.msg['font'] = ('BungeeSpice Regular', '10', 'italic')
         self.msg.place(x=40, y=120)
-
         self.msg = Label(self.ws, text=self.processos, bg=self.color)
         self.msg['font'] = ('BungeeSpice Regular', '10', 'italic')
         self.msg.place(x=40, y=160)
-
         self.ws.update()
 
     def graphic(self):
-
         np.random.seed(19680801)
 
         dt = 0.01
@@ -222,7 +189,7 @@ class Software:
         r = np.exp(-t / 0.05)
 
         cnse = np.convolve(nse, r) * dt
-        cnse = cnse[:len(t)]
+        cnse = cnse[: len(t)]
         s = 0.1 * np.sin(2 * np.pi * t) + cnse
 
         fig, (ax0, ax1) = plt.subplots(2, 1)
@@ -232,8 +199,8 @@ class Software:
         plt.show()
 
         return self.ws
-    def fps(self):
 
+    def fps(self):
         self.ws2 = Tk()
         width = 50
         height = 50
@@ -243,8 +210,24 @@ class Software:
 
         self.ws2.mainloop()
 
+
+def font(model=0, value=0):
+    font = dict()
+    font['Model'] = (
+        ['Calibri'],
+        ['Arial'],
+        ['Courier New'],
+        ['Times New Roman'],
+    )
+    font['Size'] = [10], [18], [15], [25]
+    for f in font:
+        fmodel = font['Model'][model]
+        fsize = font['Size'][value]
+
+    return fmodel, fsize
+
+
 font = font(0, 0)
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     App = Software()

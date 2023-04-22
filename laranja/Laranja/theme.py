@@ -12,15 +12,5 @@ def theme():
     backcolor = color[randint(0, 4)]
     return backcolor
 
-def font(model=0, value=0):
-
-    font = dict()
-    font['Model'] = ['Calibri'], ['Arial'], ['Courier New'], ['Times New Roman']
-    font['Size'] = [10], [18], [15], [25]
-    for f in font:
-        fmodel = (font['Model'][model])
-        fsize = (font['Size'][value])
-
-    return fmodel, fsize
 
 
