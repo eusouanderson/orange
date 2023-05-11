@@ -1,29 +1,87 @@
 # <tittle> Laranja </tittle> :orange:
-## Program to optimize and speed up PC performance in games.
+
+
+## Programa que otimiza o sistema operacional Windows 10 para jogos, ajuda na desativação de processos inutilizáveis em quanto jogas.
+---
+
+
+## Botões
+
+### Investigate
+
+É usado para investigar o seu sistema operacional , lendo todos os processos que estão ativos no seu computador.
+
+### Grafico
+É usado para abrir um gráfico em tempo real de desempenho consumido pelo seu sistema.
+
+```
+Ainda está em desenvolvimento.
+```
+
+### Otimizar
+Para otimizar seu sistema operacional, fechando todos os processos desnecessários para games.
+
+### ForceFPS
+Usado para forcar o desempenho máximo do seu computador.
+
+```
+Ainda está em desenvolvimento.
+```
+
+### Internet Control
+Aonde terás acesso a um pequeno painel de controle onde pode executar otimização da internet e fazer alguns ajustes.
+
+```
+Ainda está em desenvolvimento.
+```
+#### Brute Ping
+
+Usado para calcular o ping
+
+```
+Ainda está em desenvolvimento.
+```
+
+## Ferramentas
+
+1. Linguagem: [Python](https://www.python.org/) 
+2. Framework: [Tkinter](https://docs.python.org/3/library/tkinter.html)
+3. Plataforma de Hospedagem: 
+
+## Get Started
+
+1. Baixe o arquivo orange junto com seu código
+2. Adicionar as libs necessárias para o seu projeto no arquivo [requirements.txt](./requirements.txt)
+3. Estou usando Linux Ubuntu 22.04.2 LTS
+
+## Testar Local
+
+Para testar local execute o seguinte comando
+no diretorio :
 
 
 
-### -Alpha Version-
-    
+No Linux :
 
-# Welcome to Laranja 
+~~~
+python3 /orange/main/laranja.py
+~~~
 
-For full documentation visit ......
+No Windows :
 
-## Commands
+~~~
+ python /orange/main/laranja.py
+~~~
 
-* `Laranja new ` - Projeto em version alpha .
-* `......` - Start the live-reloading docs server.
-* `......` - Build the documentation site.
-* `......` - Print help message and exit.
+## Observação
 
-## Project layout
-
-![](laranja/Laranja/Screenshots/orange.png)
-
-![](laranja/Laranja/Screenshots/screenshot1.png)
-![](laranja/Laranja/Screenshots/screenshot2.png)
+Assim que eu terminar de criar todos os botões, estarei criando o arquivo compilado.
 
 
+![screenshot](main/Screenshots/screenshot1.png)
 
 
+![screenshot](main/Screenshots/screenshot2.png)
+
+---
+Developed by [Anderson B.O.B](https://github.com/eusouanders

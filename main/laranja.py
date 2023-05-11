@@ -24,7 +24,7 @@ class Software:
         height = self.ws.winfo_screenheight() - 100
         self.ws.geometry('%dx%d' % (width, height))
         self.ws.overrideredirect(False)
-        "self.ws.attributes('-transparentcolor', 'blue', '-alpha', 5)"
+        #self.ws.attributes('-transparentcolor', 'blue', '-alpha', 5)
 
         """Menubar"""
         self.menubar = Menu(self.ws)
