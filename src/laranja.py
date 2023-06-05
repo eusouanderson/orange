@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-path = os.getcwd()
+
+
+
+
 
 
 class Software:
@@ -223,10 +226,10 @@ class Software:
 
     def theme(self):
         color = [orcolor, vicolor, rubcolor, redcolor, brcolor]
-        BG = ['../src/BG/1.jpg', '../src/BG/2.jpg', '../src/BG/3.jpg', '../src/BG/4.jpg', '../src/BG/5.jpg']
         backcolor = color[randint(0, 4)]
+        BG = os.getcwd()+f'/src/BG/{randint(1,4)}.jpg'
         print(backcolor)
-        self.image = BG[randint(0, 4)]
+        self.image = BG
         self.colorB = brcolor
         self.colorL = backcolor
         self.color = brcolor
