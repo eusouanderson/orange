@@ -9,11 +9,6 @@ import numpy as np
 import os
 
 
-
-
-
-
-
 class Software:
     def __init__(self):
         self.ws = Tk()
@@ -33,7 +28,7 @@ class Software:
         self.ws.geometry('%dx%d' % (width, height))
         self.ws.overrideredirect(False)
         self.ws.wm_overrideredirect(False)
-        #self.ws.attributes('-transparentcolor', 'blue', '-alpha', 5)
+        # self.ws.attributes('-transparentcolor', 'blue', '-alpha', 5)
 
         """Menubar"""
         self.menubar = Menu(self.ws)
@@ -74,7 +69,6 @@ class Software:
         self.bto1['text'] = 'Investigate'
         self.bto1['command'] = self.scanner
         self.bto1.grid(row=6, column=0)
-
 
         self.bto2 = Button(
             self.widget,
@@ -143,7 +137,6 @@ class Software:
 
         self.bto7 = Button(
             self.widget,
-
             bg=self.colorB,
             activebackground=self.color,
             bd=1,
@@ -151,13 +144,12 @@ class Software:
             width=5,
             fg=self.colorL,
             command=self.theme,
-
         )
         self.bto7['text'] = 'Theme'
         self.bto7.grid(row=6, column=6)
 
         self.image = Image.open(self.image)
-        self.image = self.image.resize((width- 1500, height-500))
+        self.image = self.image.resize((width - 1500, height - 500))
         self.image_tk = ImageTk.PhotoImage(self.image)
 
         label_image = tkinter.Label(self.ws, image=self.image_tk)
@@ -227,8 +219,7 @@ class Software:
     def theme(self):
         color = [orcolor, vicolor, rubcolor, redcolor, brcolor]
         backcolor = color[randint(0, 4)]
-        BG = os.getcwd()+f'/src/BG/{randint(1,4)}.jpg'
-        print(backcolor)
+        BG = os.getcwd() + f'/BG/{randint(1,4)}.jpg'
         self.image = BG
         self.colorB = brcolor
         self.colorL = backcolor
