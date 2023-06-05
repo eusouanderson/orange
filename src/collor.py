@@ -17,11 +17,11 @@ def change():
     global count
     if (count < 2 ):
         colour = colourselection[count]
-        button.configure(bg = colour)
+        button.configure(bg=colour)
         count + 1
     else:
         colour = colourselection[count]
-        button.configure(bg = colour)
+        button.configure(bg=colour)
         count = 1
     start(root)
 

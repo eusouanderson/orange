@@ -1,4 +1,3 @@
-import random
 from tkinter import *
 from psutil import cpu_freq, cpu_count, Process, pids, process_iter
 import matplotlib.pyplot as plt
@@ -20,8 +19,8 @@ class Software:
         self.ws = Tk()
         self.ws.title('Orange')
 
-        width = self.ws.winfo_screenwidth() - 500
-        height = self.ws.winfo_screenheight() - 100
+        width = 600#self.ws.winfo_screenwidth() - 500
+        height = 500#self.ws.winfo_screenheight() - 100
         self.ws.geometry('%dx%d' % (width, height))
         self.ws.overrideredirect(False)
         #self.ws.attributes('-transparentcolor', 'blue', '-alpha', 5)
@@ -49,7 +48,7 @@ class Software:
         self.menubar.add_cascade(label='Temas', menu=help_menu, command='')
         self.img1 = Label(self.ws, bg=self.color)
         self.img1.pack()
-
+        
         'self.ws.wm_iconphoto(True)'
         self.ws.config(bg=self.color)
         self.ws.update()
@@ -81,7 +80,7 @@ class Software:
         )
         self.bto2['text'] = 'Grafico'
         self.bto2['command'] = self.graphic
-        self.bto2.grid(row=0, column=1)
+        self.bto2.grid(row=1, column=0)
 
         self.bto3 = Button(
             self.widget,
@@ -94,7 +93,7 @@ class Software:
         )
         self.bto3['text'] = 'Otmizar'
         self.bto3['command'] = clean
-        self.bto3.grid(row=0, column=2)
+        self.bto3.grid(row=2, column=0)
 
         self.bto4 = Button(
             self.widget,
@@ -107,7 +106,7 @@ class Software:
         )
         self.bto4['text'] = 'FPS'
         self.bto4['command'] = self.fps
-        self.bto4.grid(row=0, column=3)
+        self.bto4.grid(row=3, column=0)
 
         self.bto5 = Button(
             self.widget,
@@ -120,7 +119,7 @@ class Software:
         )
         self.bto5['text'] = 'Net Control'
         self.bto5['command'] = ''
-        self.bto5.grid(row=0, column=4)
+        self.bto5.grid(row=4, column=0)
 
         self.bto6 = Button(
             self.widget,
@@ -133,7 +132,7 @@ class Software:
         )
         self.bto6['text'] = 'Ping'
         self.bto6['command'] = self.ws.update()
-        self.bto6.grid(row=0, column=5)
+        self.bto6.grid(row=5, column=0)
 
         self.bto7 = Button(
             self.widget,
@@ -143,11 +142,11 @@ class Software:
             borderwidth=4,
             width=10,
             fg=self.colorL,
+            command=theme
         )
         self.bto7['text'] = 'Theme'
-        self.bto7['command'] = theme
 
-        self.bto7.grid(row=0, column=6)
+        self.bto7.grid(row=6, column=0)
 
         self.ws.update()
         self.ws.mainloop()
