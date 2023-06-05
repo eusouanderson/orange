@@ -1,4 +1,4 @@
-# <tittle> Laranja </tittle> :orange:
+# <tittle> Laranja </tittle> :orange: 
 
 
 ## Programa que otimiza o sistema operacional Windows 10 para jogos, ajuda na desativação de processos inutilizáveis em quanto jogas.
@@ -78,10 +78,10 @@ No Windows :
 Assim que eu terminar de criar todos os botões, estarei criando o arquivo compilado.
 
 
-![screenshot](main/Screenshots/screenshot1.png)
+![screenshot](src/Screenshots/screenshot1.png)
 
 
-![screenshot](main/Screenshots/screenshot2.png)
+![screenshot](src/Screenshots/screenshot2.png)
 
 ---
 Developed by [Anderson B.O.B](https://github.com/eusouanders
