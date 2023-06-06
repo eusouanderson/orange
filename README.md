@@ -4,7 +4,7 @@
 ## Programa que otimiza o sistema operacional Windows 10 para jogos, ajuda na desativação de processos inutilizáveis em quanto jogas.
 
 ---
-#### -- Versão de desenvolvimento 0.1.0 --
+#### -- Versão de desenvolvimento 0.1.1 --
 ---
 
 
