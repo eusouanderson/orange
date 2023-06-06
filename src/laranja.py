@@ -1,7 +1,7 @@
 import tkinter
 from tkinter import *
 from psutil import cpu_freq, cpu_count, Process, pids, process_iter
-from clean import clean
+from Clean import clean
 from theme import *
 from PIL import ImageTk, Image
 import matplotlib.pyplot as plt
@@ -15,7 +15,7 @@ class Software:
 
         self.numero_cpu = cpu_count()
         self.frequencia_cpu = cpu_freq().current
-        self.todosProcessos = pids()
+        self.todos_processos = pids()
         self.processos = Process()
         self.color, self.colorL, self.colorB, self.imagem = self.theme()
 
@@ -23,11 +23,14 @@ class Software:
         self.ws.config(bg=self.colorL)
         self.ws.title('Orange')
 
-        width = self.ws.winfo_screenwidth()
-        height = self.ws.winfo_screenheight()
-        self.ws.geometry('%dx%d' % (width, height))
+        self.width = 500 
+        #self.ws.winfo_screenwidth()
+        self.height = 500
+        self.ws.winfo_screenheight() 
+        self.ws.geometry('%dx%d' % (self.width, self.height))
         self.ws.overrideredirect(False)
         self.ws.wm_overrideredirect(False)
+        borde_button = 2
         # self.ws.attributes('-transparentcolor', 'blue', '-alpha', 5)
 
         """Menubar"""
@@ -62,9 +65,10 @@ class Software:
             bg=self.colorB,
             activebackground=self.color,
             bd=1,
-            borderwidth=4,
-            width=10,
+            borderwidth=borde_button,
+            width=5,
             fg=self.colorL,
+            font=self.font
         )
         self.bto1['text'] = 'Investigate'
         self.bto1['command'] = self.scanner
@@ -75,9 +79,10 @@ class Software:
             bg=self.colorB,
             activebackground=self.color,
             bd=1,
-            borderwidth=4,
-            width=10,
+            borderwidth=borde_button,
+            width=5,
             fg=self.colorL,
+            font=self.font
         )
         self.bto2['text'] = 'Grafico'
         self.bto2['command'] = self.graphic
@@ -88,9 +93,10 @@ class Software:
             bg=self.colorB,
             activebackground=self.color,
             bd=1,
-            borderwidth=4,
-            width=10,
+            borderwidth=borde_button,
+            width=5,
             fg=self.colorL,
+            font=self.font
         )
         self.bto3['text'] = 'Otmizar'
         self.bto3['command'] = clean
@@ -101,9 +107,10 @@ class Software:
             bg=self.colorB,
             activebackground=self.color,
             bd=1,
-            borderwidth=4,
-            width=10,
+            borderwidth=borde_button,
+            width=5,
             fg=self.colorL,
+            font=self.font
         )
         self.bto4['text'] = 'FPS'
         self.bto4['command'] = self.fps
@@ -114,9 +121,10 @@ class Software:
             bg=self.colorB,
             activebackground=self.color,
             bd=1,
-            borderwidth=4,
-            width=10,
+            borderwidth=borde_button,
+            width=5,
             fg=self.colorL,
+            font=self.font
         )
         self.bto5['text'] = 'Net Control'
         self.bto5['command'] = ''
@@ -127,9 +135,10 @@ class Software:
             bg=self.colorB,
             activebackground=self.color,
             bd=1,
-            borderwidth=4,
-            width=10,
+            borderwidth=borde_button,
+            width=5,
             fg=self.colorL,
+            font=self.font
         )
         self.bto6['text'] = 'Ping'
         self.bto6['command'] = self.ws.update()
@@ -140,42 +149,44 @@ class Software:
             bg=self.colorB,
             activebackground=self.color,
             bd=1,
-            borderwidth=4,
+            borderwidth=borde_button,
             width=5,
             fg=self.colorL,
             command=self.theme,
+            font=self.font
         )
         self.bto7['text'] = 'Theme'
         self.bto7.grid(row=6, column=6)
 
-        self.image = Image.open(self.image)
-        self.image = self.image.resize((width - 1500, height - 500))
+        self.image = Image.open(os.getcwd() + f'/src/BG/{randint(1,4)}.jpg')
+        self.image = self.image.resize((self.width, self.height))
         self.image_tk = ImageTk.PhotoImage(self.image)
 
         label_image = tkinter.Label(self.ws, image=self.image_tk)
 
         label_image.pack()
 
-        self.ws.update()
+        self.ws.after(100, self.theme)
         self.ws.mainloop()
 
     def scanner(self):
+        self.roading()
         self.msg = Label(self.ws, bg=self.color, background=self.color)
         self.msg['text'] = 'Numero de Processadores'
-        self.msg['font'] = font
+        self.msg['font'] =self.font
         self.msg.place(x=20, y=60)
 
         self.msg = Label(self.ws, bg=self.colorL, background=self.color)
         self.msg['text'] = 'Frequencia do Processador'
-        self.msg['font'] = font
+        self.msg['font'] =self.font
         self.msg.place(x=20, y=100)
 
         self.msg = Label(self.ws, bg=self.color, background=self.color)
         self.msg['text'] = 'Processos abertos'
-        self.msg['font'] = font
+        self.msg['font'] =self.font
         self.msg.place(x=20, y=140)
         self.processos.parent()
-        self.processos = len(self.todosProcessos)
+        self.processos = len(self.todos_processos)
         self.msg = Label(self.ws, text=self.numero_cpu, bg=self.color)
         self.msg['font'] = ('BungeeSpice Regular', '10', 'italic')
         self.msg.place(x=40, y=80)
@@ -225,27 +236,41 @@ class Software:
         self.colorL = backcolor
         self.color = brcolor
         self.ws.config(bg=self.colorL)
-        self.ws.update()
+        
         return self.color, self.colorL, self.colorB, self.image
 
 
-def font(model=0, value=0):
-    font = dict()
-    font['Model'] = (
-        ['Calibri'],
-        ['Arial'],
-        ['Courier New'],
-        ['Times New Roman'],
-    )
-    font['Size'] = [10], [18], [15], [25]
-    for f in font:
-        fmodel = font['Model'][model]
-        fsize = font['Size'][value]
+    def font(model=0, value=0):
+        font = dict()
+        font['Model'] = (
+            ['Calibri'],
+            ['Arial'],
+            ['Courier New'],
+            ['Times New Roman'],
+        )
+        font['Size'] = [8], [18], [15], [25]
+        for f in font:
+            fmodel = font['Model'][model]
+            fsize = font['Size'][value]
 
-    return fmodel, fsize
+        return fmodel, fsize
 
 
-font = font(0, 0)
+    font = font(0, 0)
+
+    def roading(self):
+        imagem_origin = Image.open("./src/Screenshots/orange.png")
+        image_ro_tk = ImageTk.PhotoImage(imagem_origin)
+        label_image_rotation = tkinter.Label(self.ws, image=image_ro_tk)
+        label_image_rotation.pack()
+
+        image_rotation = imagem_origin.rotate(90)
+        image_ro_tk = ImageTk.PhotoImage(image_rotation)
+        label_image_rotation.configure(image=image_ro_tk)
+        label_image_rotation.image = image_ro_tk
+
+        self.ws.after(100, self.roading)
+    
 
 if __name__ == '__main__':
     App = Software()
