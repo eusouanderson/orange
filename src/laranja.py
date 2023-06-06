@@ -29,7 +29,7 @@ class Software:
         self.ws.winfo_screenheight() 
         self.ws.geometry('%dx%d' % (self.width, self.height))
         self.ws.overrideredirect(False)
-        self.ws.wm_overrideredirect(False)
+        self.ws.bell()
         borde_button = 2
         # self.ws.attributes('-transparentcolor', 'blue', '-alpha', 5)
 
