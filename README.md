@@ -88,3 +88,11 @@ Assim que eu terminar de criar todos os botões, estarei criando o arquivo compi
 
 ---
 Developed by [Anderson B.O.B](https://github.com/eusouanders
+
+
+
+PySide6 = "^6.0.0"
+psutil = "^5.9.0"
+matplotlib = "^3.5.0"
+Pillow = "^9.0.0"
+numpy = "^1.23.0"
