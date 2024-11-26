@@ -96,3 +96,9 @@ psutil = "^5.9.0"
 matplotlib = "^3.5.0"
 Pillow = "^9.0.0"
 numpy = "^1.23.0"
+
+
+### permissões para os arquivos de execução e build
+```bash
+chmod +x build.sh
+```
