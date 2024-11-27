@@ -14,5 +14,13 @@ else
     exit 1
 fi
 
-# Executa o script Python com a plataforma como argumento
-poetry run python src/build/build.py $PLATFORM v0.1.1
+# Definir variáveis de ambiente dependendo do sistema operacional
+if [[ "$PLATFORM" == "windows" ]]; then
+    export PROJECT_PATH="C:\\Users\\Anderson\\Documents\\orange\\src"
+elif [[ "$PLATFORM" == "linux" ]]; then
+    export PROJECT_PATH="/home/anderson/projects/orange/src"
+fi
+
+# Executa o script de build com a plataforma e a versão do release
+echo "Executando o build para a plataforma $PLATFORM..."
+poetry run python compile/build.py $PLATFORM v0.1.1
