@@ -15,4 +15,4 @@ else
 fi
 
 # Executa o script Python com a plataforma como argumento
-poetry run python src/build/build.py $PLATFORM
+poetry run python src/build/build.py $PLATFORM v0.1.1

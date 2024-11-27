@@ -1,104 +1,200 @@
-# <tittle> Laranja </tittle> :orange: 
+# <title>Orange</title> :orange:
 
-
-## Programa que otimiza o sistema operacional Windows 10 para jogos, ajuda na desativação de processos inutilizáveis em quanto jogas.
+## A program that optimizes the Windows 10 operating system for gaming by helping disable unnecessary processes while gaming.
 
 ---
-#### -- Versão de desenvolvimento 0.1.1 --
+#### -- Development Version 0.1.1 --
 ---
 
-
-## Botões
+## Buttons
 
 ### Investigate
 
-É usado para investigar o seu sistema operacional , lendo todos os processos que estão ativos no seu computador.
+Used to investigate your operating system by reading all active processes on your computer.
 
-### Grafico
-É usado para abrir um gráfico em tempo real de desempenho consumido pelo seu sistema.
+### Graph
 
-```
-Ainda está em desenvolvimento.
-```
+Used to open a real-time performance graph showing the resource consumption of your system.
 
-### Otimizar
-Para otimizar seu sistema operacional, fechando todos os processos desnecessários para games.
+Still under development.
+
+shell
+Copiar código
+
+### Optimize
+
+Optimizes your operating system by closing unnecessary processes for gaming.
 
 ### ForceFPS
-Usado para forcar o desempenho máximo do seu computador.
 
-```
-Ainda está em desenvolvimento.
-```
+Used to force the maximum performance of your computer.
+
+Still under development.
+
+bash
+Copiar código
 
 ### Internet Control
-Aonde terás acesso a um pequeno painel de controle onde pode executar otimização da internet e fazer alguns ajustes.
 
-```
-Ainda está em desenvolvimento.
-```
+Provides a small control panel where you can optimize your internet connection and make some adjustments.
+
+Still under development.
+
+shell
+Copiar código
+
 #### Brute Ping
 
-Usado para calcular o ping
+Used to calculate the ping.
 
-```
-Ainda está em desenvolvimento.
-```
+Still under development.
 
-## Ferramentas
+yaml
+Copiar código
 
-1. Linguagem: [Python](https://www.python.org/) 
+## Tools
+
+1. Language: [Python](https://www.python.org/)
 2. Framework: [Tkinter](https://docs.python.org/3/library/tkinter.html)
-3. Plataforma de Hospedagem: 
+3. Hosting Platform:
 
 ## Get Started
 
-1. Baixe o arquivo orange junto com seu código
-2. Adicionar as libs necessárias para o seu projeto no arquivo [requirements.txt](./requirements.txt)
-3. Estou usando Linux Ubuntu 22.04.2 LTS
+1. Download the orange folder along with its code.
+2. Add the necessary libraries for your project in the [requirements.txt](./requirements.txt) file.
+3. I'm using Linux Ubuntu 22.04.2 LTS.
 
-## Testar Local
+## Test Locally
 
-Para testar local execute o seguinte comando
-no diretorio :
+To test locally, execute the following command in the directory:
 
+On Linux:
 
-
-No Linux :
-
-~~~
+~~~ 
 python3 /orange/main/laranja.py
 ~~~
 
-No Windows :
+On Windows:
 
+~~~ 
+python /orange/main/laranja.py
 ~~~
- python /orange/main/laranja.py
-~~~
 
-## Observação
+## Note
 
-Assim que eu terminar de criar todos os botões, estarei criando o arquivo compilado.
-
+Once I finish creating all the buttons, I will create the compiled file.
 
 ![screenshot](src/Screenshots/screenshot1.png)
-
 
 ![screenshot](src/Screenshots/screenshot2.png)
 
 ---
-Developed by [Anderson B.O.B](https://github.com/eusouanders
+Developed by [Anderson B.O.B](https://github.com/eusouanders)
 
+---
 
+## Tree
 
-PySide6 = "^6.0.0"
-psutil = "^5.9.0"
-matplotlib = "^3.5.0"
-Pillow = "^9.0.0"
-numpy = "^1.23.0"
-
-
-### permissões para os arquivos de execução e build
 ```bash
-chmod +x build.sh
+anderson@DESKTOP-ROPF13S:~/projects/orange$ tree
+.
+├── Dockerfile
+├── Docs
+│   └── style_docs
+│       └── styles.md
+├── LICENSE
+├── README.md
+├── build.sh
+├── config.json
+├── docker-compose.yml
+├── poetry.lock
+├── pyproject.toml
+├── requirements.txt
+├── src
+│   ├── __init__.py
+│   ├── assets
+│   │   └── images
+│   │       ├── background
+│   │       │   ├── 1.jpg
+│   │       │   ├── 2.jpg
+│   │       │   ├── 3.jpg
+│   │       │   ├── 4.jpg
+│   │       │   └── 5.jpg
+│   │       ├── orange.png
+│   │       └── screenshots
+│   │           ├── orange.png
+│   │           ├── screenshot1.png
+│   │           ├── screenshot2.png
+│   │           ├── screenshot3.png
+│   │           ├── screenshot4.png
+│   │           ├── screenshot7.png
+│   │           └── screenshot8.png
+│   ├── build
+│   │   ├── build
+│   │   │   ├── Orange
+│   │   │   │   ├── Analysis-00.toc
+│   │   │   │   ├── EXE-00.toc
+│   │   │   │   ├── Orange.pkg
+│   │   │   │   ├── PKG-00.toc
+│   │   │   │   ├── PYZ-00.pyz
+│   │   │   │   ├── PYZ-00.toc
+│   │   │   │   ├── base_library.zip
+│   │   │   │   ├── localpycs
+│   │   │   │   │   ├── pyimod01_archive.pyc
+│   │   │   │   │   ├── pyimod02_importers.pyc
+│   │   │   │   │   ├── pyimod03_ctypes.pyc
+│   │   │   │   │   └── struct.pyc
+│   │   │   │   ├── warn-Orange.txt
+│   │   │   │   └── xref-Orange.html
+│   │   │   └── main
+│   │   │       ├── Analysis-00.toc
+│   │   │       ├── EXE-00.toc
+│   │   │       ├── PKG-00.toc
+│   │   │       ├── PYZ-00.pyz
+│   │   │       ├── PYZ-00.toc
+│   │   │       ├── base_library.zip
+│   │   │       ├── localpycs
+│   │   │       │   ├── pyimod01_archive.pyc
+│   │   │       │   ├── pyimod02_importers.pyc
+│   │   │       │   ├── pyimod03_ctypes.pyc
+│   │   │       │   └── struct.pyc
+│   │   │       ├── main.pkg
+│   │   │       ├── warn-main.txt
+│   │   │       └── xref-main.html
+│   │   ├── build.py
+│   │   ├── dist
+│   │   │   └── Orange
+│   │   └── specs
+│   │       ├── Orange.spec
+│   │       └── main.spec
+│   ├── collor.py
+│   ├── config
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── background.cpython-312.pyc
+│   │   │   ├── choose.cpython-312.pyc
+│   │   │   ├── clean.cpython-312.pyc
+│   │   │   ├── save.cpython-312.pyc
+│   │   │   ├── save_user_config.cpython-312.pyc
+│   │   │   └── themes.cpython-312.pyc
+│   │   ├── background.py
+│   │   ├── choose.py
+│   │   ├── clean.py
+│   │   ├── config.json
+│   │   ├── save_user_config.py
+│   │   └── themes.py
+│   ├── core
+│   │   ├── __pycache__
+│   │   │   └── reload.cpython-312.pyc
+│   │   ├── main.py
+│   │   └── reload.py
+│   ├── data
+│   │   └── __init__.py
+│   ├── graphic
+│   │   └── __init__.py
+│   ├── test.py
+│   └── theme
+│       └── __init__.py
+└── start.sh
 ```
