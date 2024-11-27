@@ -1,8 +1,12 @@
+[build-system]
+requires = [ "poetry-core",]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "orange"
-version = "0.1.0"
+version = "0.1.2"
 description = ""
-authors = ["Anderson Rodrigues <eusouanderson@outlook.com>"]
+authors = [ "Anderson Rodrigues <eusouanderson@outlook.com>",]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -11,7 +15,3 @@ pyside6 = "^6.8.0.2"
 watchdog = "^6.0.0"
 pyinstaller = "^6.11.1"
 black = "^24.10.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

@@ -20,6 +20,11 @@ if [[ "$OS" == "MINGW"* || "$OS" == "CYGWIN"* || "$OS" == "Darwin" ]]; then
     
     # Adicionar o caminho do projeto ao PYTHONPATH (sem o : inicial)
     export PYTHONPATH=$PROJECT_PATH
+    
+    # Definir o ambiente de desenvolvimento    
+    export ENV=development
+    
+    # Definir o ambiente de desenvolvimento
     export DEV_ENV=true
     # Exibir PYTHONPATH para garantir que o caminho foi configurado corretamente
     echo "PYTHONPATH configurado para: $PYTHONPATH"
