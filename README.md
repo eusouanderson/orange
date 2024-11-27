@@ -1,47 +1,44 @@
-# <title>Orange</title> :orange:
+# Orange A Program to Optimize Windows 10 for Gaming
 
-## A program that optimizes the Windows 10 operating system for gaming by helping disable unnecessary processes while gaming.
+## Overview
+
+Orange is a program that optimizes the Windows 10 operating system for gaming by helping disable unnecessary processes while gaming.
 
 ---
+
 #### -- Development Version 0.1.1 --
+
 ---
 
-## Buttons
+## Features
 
-### Investigate
+### Buttons
+
+#### Investigate
 
 Used to investigate your operating system by reading all active processes on your computer.
 
-### Graph
+#### Graph
 
 Used to open a real-time performance graph showing the resource consumption of your system.
 
 Still under development.
 
-shell
-Copiar código
-
-### Optimize
+#### Optimize
 
 Optimizes your operating system by closing unnecessary processes for gaming.
 
-### ForceFPS
+#### ForceFPS
 
 Used to force the maximum performance of your computer.
 
 Still under development.
 
-bash
-Copiar código
-
-### Internet Control
+#### Internet Control
 
 Provides a small control panel where you can optimize your internet connection and make some adjustments.
 
 Still under development.
-
-shell
-Copiar código
 
 #### Brute Ping
 
@@ -49,14 +46,15 @@ Used to calculate the ping.
 
 Still under development.
 
-yaml
-Copiar código
+---
 
 ## Tools
 
 1. Language: [Python](https://www.python.org/)
-2. Framework: [Tkinter](https://docs.python.org/3/library/tkinter.html)
-3. Hosting Platform:
+
+
+
+---
 
 ## Get Started
 
@@ -64,39 +62,83 @@ Copiar código
 2. Add the necessary libraries for your project in the [requirements.txt](./requirements.txt) file.
 3. I'm using Linux Ubuntu 22.04.2 LTS.
 
+---
+
 ## Test Locally
 
 To test locally, execute the following command in the directory:
 
-On Linux:
-
-~~~ 
-python3 /orange/main/laranja.py
-~~~
-
-On Windows:
-
-~~~ 
-python /orange/main/laranja.py
-~~~
-
-## Note
-
-Once I finish creating all the buttons, I will create the compiled file.
-
-![screenshot](src/Screenshots/screenshot1.png)
-
-![screenshot](src/Screenshots/screenshot2.png)
-
----
-Developed by [Anderson B.O.B](https://github.com/eusouanders)
-
----
-
-## Tree
+### On Linux or Windows:
 
 ```bash
-anderson@DESKTOP-ROPF13S:~/projects/orange$ tree
+./start.sh
+```
+
+Running Scripts
+There are .sh scripts available to help with running and building the project for both Linux and Windows systems.
+
+Running the Project
+Linux: Use the start.sh script to run the project on Linux.
+
+Run the following command:
+
+bash
+Copiar código
+./start.sh
+Windows: A similar script can be executed for Windows systems (e.g., start_windows.bat) to launch the project.
+
+Building the Project
+You can build the project for both Linux and Windows using the build.sh script, which will create a packaged version of the program.
+
+For Linux:
+To build for Linux, use the following command:
+
+bash
+Copiar código
+./build.sh linux
+This will create a build suitable for deployment on Linux systems.
+
+For Windows:
+To build for Windows, use the following command:
+
+bash
+Copiar código
+./build.sh windows
+This will generate a build suitable for deployment on Windows systems.
+
+Poetry as Dependency Manager
+The project uses Poetry as a package manager to handle dependencies.
+
+Installing Poetry
+To install Poetry, follow these steps:
+
+## Install Poetry by running the following command:
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+## Make sure to add Poetry to your system's PATH.
+
+Installing Dependencies with Poetry
+After setting up Poetry, you can install all the necessary dependencies by running the following command:
+
+```bash
+poetry install
+```
+
+Note
+Once I finish creating all the buttons, I will create the compiled file.
+
+
+
+
+
+Developed by Anderson B.O.B
+
+## Directory Tree
+
+```bash
 .
 ├── Dockerfile
 ├── Docs
@@ -197,4 +239,5 @@ anderson@DESKTOP-ROPF13S:~/projects/orange$ tree
 │   └── theme
 │       └── __init__.py
 └── start.sh
+
 ```
