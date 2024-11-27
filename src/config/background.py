@@ -3,8 +3,6 @@ import random
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap
 
-
-
 def change_background(label, background_images_path):
     """Alterar o fundo da janela com uma imagem aleatória"""
     images = os.listdir(background_images_path)
