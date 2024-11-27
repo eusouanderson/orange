@@ -66,7 +66,7 @@ def main():
     window = QWidget()
     window.setWindowTitle("Orange")
     icon_path = os.path.join(
-        os.path.dirname(__file__), "..", "assets", "images", "icons", "orange.png"
+        os.path.dirname(__file__), "assets", "images", "icons", "orange.ico"
     )
     window.setWindowIcon(QIcon(icon_path))
 
@@ -89,9 +89,14 @@ def main():
     label.setAlignment(Qt.AlignCenter)
     layout.addWidget(label)
 
+
     # Background image path
+    is_dev = os.environ.get('DEV_ENV', 'false').lower() == 'true'
+
     background_images_path = os.path.join(
-        os.path.dirname(__file__), "..", "assets", "images", "background"
+        os.path.dirname(__file__),
+        '..' if is_dev else '',
+        "assets", "images", "background"
     )
     change_background(label, background_images_path)
 
