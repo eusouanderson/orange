@@ -3,11 +3,12 @@ import platform
 import subprocess
 import shutil
 
+
 def clean():
     os_type = platform.system()
 
-    if os_type == 'Windows':
-        
+    if os_type == "Windows":
+
         path_dir = r"C:\Users\ADMINI~1\AppData\Local\Temp"
         path_dir1 = r"C:\Windows\Temp"
         path_dir2 = r"C:\Windows\system32\WSReset.exe"
@@ -35,12 +36,12 @@ def clean():
         except Exception as e:
             print(f"Erro ao limpar arquivos no Windows: {e}")
 
-    elif os_type == 'Linux':
-        
+    elif os_type == "Linux":
+
         path_dir = "/tmp"
         path_dir1 = "/var/tmp"
         clean_cmd = "rm -rf /tmp/*"
-        
+
         try:
             # Remover arquivos dos diretórios temporários
             for dir_path in [path_dir, path_dir1]:
@@ -63,12 +64,12 @@ def clean():
         except Exception as e:
             print(f"Erro ao limpar arquivos no Linux: {e}")
 
-    elif os_type == 'Darwin':  # Para macOS
-        
+    elif os_type == "Darwin":
+
         path_dir = "/tmp"
         path_dir1 = "/var/tmp"
         clean_cmd = "rm -rf /tmp/*"
-        
+
         try:
             # Remover arquivos dos diretórios temporários
             for dir_path in [path_dir, path_dir1]:

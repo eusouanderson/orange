@@ -1,8 +1,23 @@
 import os
 import json
+import logging
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QSlider, QDialog, QDialogButtonBox, QSpinBox, QCheckBox
+from PySide6.QtGui import QIcon, QColor
+from PySide6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout,
+    QWidget,
+    QLineEdit,
+    QSlider,
+    QColorDialog,
+    QDialog,
+    QDialogButtonBox,
+    QSpinBox,
+    QCheckBox
+)
 from watchdog.observers import Observer
 from reload import setup_reload_signal, ReloadHandler
 from config.clean import clean
@@ -11,13 +26,17 @@ from config.themes import change_theme
 from config.choose import choose_background_color, choose_button_color
 from config.save_user_config import save_settings, load_settings
 
+# Configuração do logger
+logging.basicConfig(level=logging.DEBUG if os.getenv("ENV") == "development" else logging.WARNING)
+logger = logging.getLogger(__name__)
+
 # Layout settings window
 class LayoutConfigWindow(QDialog):
     def __init__(self, window, label, button_layout):
         super().__init__(window)
         self.setWindowTitle("Layout Settings")
         self.setModal(True)
-        
+
         # Layout of the settings window
         layout = QVBoxLayout()
 
@@ -28,7 +47,9 @@ class LayoutConfigWindow(QDialog):
 
         # Button to choose background color
         background_button = QPushButton("Choose Background Color", self)
-        background_button.clicked.connect(lambda: choose_background_color(self.background_input))
+        background_button.clicked.connect(
+            lambda: choose_background_color(self.background_input)
+        )
         layout.addWidget(background_button)
 
         # Text input for button color
@@ -38,7 +59,9 @@ class LayoutConfigWindow(QDialog):
 
         # Button to choose button color
         button_button = QPushButton("Choose Button Color", self)
-        button_button.clicked.connect(lambda: choose_button_color(self.button_color_input))
+        button_button.clicked.connect(
+            lambda: choose_button_color(self.button_color_input)
+        )
         layout.addWidget(button_button)
 
         # Slider for font size
@@ -57,7 +80,12 @@ class LayoutConfigWindow(QDialog):
         self.setLayout(layout)
 
     def get_values(self):
-        return self.background_input.text(), self.font_slider.value(), self.button_color_input.text()
+        return (
+            self.background_input.text(),
+            self.font_slider.value(),
+            self.button_color_input.text(),
+        )
+
 
 # Main application class
 class MainWindow(QWidget):
@@ -174,8 +202,10 @@ class MainWindow(QWidget):
             change_theme(self, self.label, self.button_layout, background_color, font_size, button_color)
             save_settings(background_color, font_size, button_color)
 
+
 def main():
     app = QApplication([])
+
     window = MainWindow()
     window.show()
 
@@ -195,5 +225,7 @@ def main():
         observer.stop()
         observer.join()
 
+
 if __name__ == "__main__":
+    logger.debug("Application started")
     main()
