@@ -1,8 +1,8 @@
 import os
 import json
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QColor
-from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QSlider, QColorDialog, QDialog, QDialogButtonBox
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QLineEdit, QSlider, QDialog, QDialogButtonBox, QSpinBox, QCheckBox
 from watchdog.observers import Observer
 from reload import setup_reload_signal, ReloadHandler
 from config.clean import clean
@@ -59,78 +59,124 @@ class LayoutConfigWindow(QDialog):
     def get_values(self):
         return self.background_input.text(), self.font_slider.value(), self.button_color_input.text()
 
-# Main function
+# Main application class
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Orange")
+        icon_path = os.path.join(
+            os.path.dirname(__file__), "..", "assets", "images", "icons", "orange.png"
+        )
+        self.setWindowIcon(QIcon(icon_path))
+
+        # Load settings
+        settings = load_settings()
+        if settings:
+            self.background_color = settings.get('background_color', '#FFFFFF')
+            self.font_size = settings.get('font_size', 16)
+            self.button_color = settings.get('button_color', '#000000')
+        else:
+            self.background_color = "#FFFFFF"  # Default background color
+            self.font_size = 16  # Default font size
+            self.button_color = "#000000"  # Default button color
+
+        # Main layout
+        self.layout = QVBoxLayout()
+
+        # Title
+        self.label = QLabel("Orange!")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.label)
+
+        # Background image path
+        background_images_path = os.path.join(
+            os.path.dirname(__file__), "..", "assets", "images", "background"
+        )
+        change_background(self.label, background_images_path)
+
+        # Apply the loaded settings to the UI elements
+        self.setStyleSheet(f"background-color: {self.background_color};")
+        self.label.setStyleSheet(f"QLabel {{ font-size: {self.font_size}px; }}")
+
+        # Layout for buttons (horizontal)
+        self.button_layout = QHBoxLayout()
+
+        # Button to change the background
+        button = QPushButton("Change Background")
+        button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
+        button.clicked.connect(lambda: change_background(self.label, background_images_path))
+        self.button_layout.addWidget(button)
+
+        # Set up timer for cache clearing
+        self.timer = QTimer(self)
+        self.timer.setInterval(1000)  # Default to 1 second (adjustable below)
+        self.timer.timeout.connect(lambda: clean())  # Calls clean() function every interval
+
+        # Spinbox to set interval for cache cleaning
+        self.interval_spinbox = QSpinBox(self)
+        self.interval_spinbox.setRange(1, 3600)  # Set range (seconds)
+        self.interval_spinbox.setValue(60)  # Default 60 seconds
+        self.button_layout.addWidget(self.interval_spinbox)
+
+        # Checkbox to enable/disable infinite cleaning
+        self.infinite_checkbox = QCheckBox("Infinite Loop (clear cache repeatedly)", self)
+        self.button_layout.addWidget(self.infinite_checkbox)
+
+        # Start timer button
+        start_timer_button = QPushButton("Start Cache Timer", self)
+        start_timer_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
+        start_timer_button.clicked.connect(self.start_timer)
+        self.button_layout.addWidget(start_timer_button)
+
+        # Stop timer button
+        stop_timer_button = QPushButton("Stop Cache Timer", self)
+        stop_timer_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
+        stop_timer_button.clicked.connect(self.stop_timer)
+        self.button_layout.addWidget(stop_timer_button)
+
+        # Reload button
+        reload_button = QPushButton("Reload", self)
+        reload_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
+        self.button_layout.addWidget(reload_button)
+
+        # Layout settings button
+        config_button = QPushButton("Layout Settings", self)
+        config_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
+        config_button.clicked.connect(lambda: self.show_settings())
+        self.button_layout.addWidget(config_button)
+
+        # Adding the button layout to the main layout
+        self.layout.addLayout(self.button_layout)
+
+        # Setting the final layout in the window
+        self.setLayout(self.layout)
+        self.resize(800, 600)
+
+    # Start the timer
+    def start_timer(self):
+        interval = self.interval_spinbox.value() * 1000  # Convert seconds to milliseconds
+        print(f"Starting timer with interval: {interval} ms")
+        self.timer.setInterval(interval)  # Set the new interval
+        self.timer.start()  # Start the timer
+        if not self.infinite_checkbox.isChecked():
+            print("One-time cleaning will be triggered after the interval.")
+            QTimer.singleShot(interval, self.stop_timer)  # Stop after one cycle if not infinite
+
+    def stop_timer(self):
+        print("Stopping timer.")
+        self.timer.stop()  # Stop the timer
+
+    # Function to open the settings window
+    def show_settings(self):
+        config_window = LayoutConfigWindow(self, self.label, self.button_layout)
+        if config_window.exec() == QDialog.Accepted:
+            background_color, font_size, button_color = config_window.get_values()
+            change_theme(self, self.label, self.button_layout, background_color, font_size, button_color)
+            save_settings(background_color, font_size, button_color)
+
 def main():
     app = QApplication([])
-
-    window = QWidget()
-    window.setWindowTitle("Orange")
-    icon_path = os.path.join(
-        os.path.dirname(__file__), "..", "assets", "images", "icons", "orange.png"
-    )
-    window.setWindowIcon(QIcon(icon_path))
-
-    # Load settings
-    settings = load_settings()
-    if settings:
-        background_color = settings['background_color']
-        font_size = settings['font_size']
-        button_color = settings['button_color']
-    else:
-        background_color = "#FFFFFF"  # Default background color
-        font_size = 16  # Default font size
-        button_color = "#000000"  # Default button color
-
-    # Main layout
-    layout = QVBoxLayout()
-
-    # Title
-    label = QLabel("Orange!")
-    label.setAlignment(Qt.AlignCenter)
-    layout.addWidget(label)
-
-    # Background image path
-    background_images_path = os.path.join(
-        os.path.dirname(__file__), "..", "assets", "images", "background"
-    )
-    change_background(label, background_images_path)
-
-    # Apply the loaded settings to the UI elements
-    window.setStyleSheet(f"background-color: {background_color};")
-    label.setStyleSheet(f"font-size: {font_size}px;")
-    
-    # Layout for buttons (horizontal)
-    button_layout = QHBoxLayout()
-
-    # Assuming buttons should also have color adjustments
-    for button in button_layout.findChildren(QPushButton):
-        button.setStyleSheet(f"background-color: {button_color};")
-
-    # Button to change the background
-    button = QPushButton("Change Background")
-    button.clicked.connect(lambda: change_background(label, background_images_path))
-    button_layout.addWidget(button)
-
-    # Button to clear cache
-    button1 = QPushButton("Clear Cache")
-    button1.clicked.connect(lambda: clean())
-    button_layout.addWidget(button1)
-
-    # Reload button
-    reload_button = QPushButton("Reload")
-    button_layout.addWidget(reload_button)
-
-    # Layout settings button
-    config_button = QPushButton("Layout Settings")
-    config_button.clicked.connect(lambda: show_settings(window, label, button_layout))
-    button_layout.addWidget(config_button)
-
-    # Adding the button layout to the main layout
-    layout.addLayout(button_layout)
-
-    # Setting the final layout in the window
-    window.setLayout(layout)
-    window.resize(800, 600)
+    window = MainWindow()
     window.show()
 
     # Setting up the reload signal
@@ -148,14 +194,6 @@ def main():
     finally:
         observer.stop()
         observer.join()
-
-# Function to open the settings window
-def show_settings(window, label, button_layout):
-    config_window = LayoutConfigWindow(window, label, button_layout)
-    if config_window.exec() == QDialog.Accepted:
-        background_color, font_size, button_color = config_window.get_values()
-        change_theme(window, label, button_layout, background_color, font_size, button_color)
-        save_settings(background_color, font_size, button_color)
 
 if __name__ == "__main__":
     main()
