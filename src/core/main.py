@@ -93,7 +93,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Orange")
         icon_path = os.path.join(
-            os.path.dirname(__file__), "..", "assets", "images", "icons", "orange.png"
+            os.path.dirname(__file__), "..", "assets", "images", "icons", "orange.ico"
         )
         self.setWindowIcon(QIcon(icon_path))
 

@@ -57,6 +57,7 @@ def build_executable(platform):
     icon_path = os.path.join(
         project_dir, "..", "src", "assets", "images", "icons", "orange.ico"
     )
+    
     logger.info(f"Ícone do aplicativo: {icon_path}")
 
     src_dir = os.path.join(project_dir, "..", "src")
@@ -126,7 +127,8 @@ def main():
         logger.error("Uso: python build.py <platform> <tag>")
         logger.error("Plataformas: windows, linux")
         sys.exit(1)
-
+    
+    
     platform = sys.argv[1].lower()
     tag = sys.argv[2]  # O tag do release, por exemplo: v1.0.0
 
