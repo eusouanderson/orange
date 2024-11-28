@@ -26,6 +26,11 @@ from config.themes import change_theme
 from config.choose import choose_background_color, choose_button_color
 from config.save_user_config import save_settings, load_settings
 
+# Components
+from components.CacheTimerControls import CacheTimerControls
+from components.BackgroundChanger import BackgroundChanger
+from components.LayoutSettingsDialog import LayoutSettingsDialog
+
 # Configuração do logger
 logging.basicConfig(level=logging.DEBUG if os.getenv("ENV") == "development" else logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -80,6 +85,8 @@ class LayoutConfigWindow(QDialog):
 
         # Applying the layout
         self.setLayout(layout)
+        
+        
 
     def get_values(self):
         return (
@@ -117,6 +124,7 @@ class MainWindow(QWidget):
 
         # Main layout
         self.layout = QVBoxLayout()
+        self.resizable = False
 
         # Title
         self.label = QLabel("Orange!")
@@ -134,45 +142,28 @@ class MainWindow(QWidget):
             )
         change_background(self.label, background_images_path)
 
-        # Apply the loaded settings to the UI elements
-        self.setStyleSheet(f"background-color: {self.background_color};")
-        self.label.setStyleSheet(f"QLabel {{ font-size: {self.font_size}px; }}")
 
         # Layout for buttons (horizontal)
         self.button_layout = QHBoxLayout()
 
-        # Button to change the background
-        button = QPushButton("Change Background")
-        button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
-        button.clicked.connect(lambda: change_background(self.label, background_images_path))
-        self.button_layout.addWidget(button)
-
-        # Set up timer for cache clearing
+        # Timer controls component
         self.timer = QTimer(self)
-        self.timer.setInterval(1000)  # Default to 1 second (adjustable below)
-        self.timer.timeout.connect(lambda: clean())  # Calls clean() function every interval
+        self.layout.addLayout(CacheTimerControls(self, self.timer, clean, self.button_color, self.button_layout))
 
-        # Spinbox to set interval for cache cleaning
-        self.interval_spinbox = QSpinBox(self)
-        self.interval_spinbox.setRange(1, 3600)  # Set range (seconds)
-        self.interval_spinbox.setValue(60)  # Default 60 seconds
-        self.button_layout.addWidget(self.interval_spinbox)
+        # Blackground Changer component
+        self.layout.addWidget(BackgroundChanger(self, self.label, change_background, background_images_path, self.button_color))
+        
 
-        # Checkbox to enable/disable infinite cleaning
-        self.infinite_checkbox = QCheckBox("Infinite Loop (clear cache repeatedly)", self)
-        self.button_layout.addWidget(self.infinite_checkbox)
+        # Layout settings button component
+        '''self.button_widget = LayoutSettingsDialog(self, self.label, self.button_color, self.button_layout)
+        self.layout.addWidget(self.button_widget)'''
 
-        # Start timer button
-        start_timer_button = QPushButton("Start Cache Timer", self)
-        start_timer_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
-        start_timer_button.clicked.connect(self.start_timer)
-        self.button_layout.addWidget(start_timer_button)
-
-        # Stop timer button
-        stop_timer_button = QPushButton("Stop Cache Timer", self)
-        stop_timer_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
-        stop_timer_button.clicked.connect(self.stop_timer)
-        self.button_layout.addWidget(stop_timer_button)
+        # PRECISA CRIAR UMA CLASSE AQUI PARA BAIXO PARA O LAYOUT DE CONFIGURAÇÕES
+        # Change icon only mode
+        toggle_button = QPushButton("Toggle Icons Only", self)
+        toggle_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
+        toggle_button.clicked.connect(self.toggle_icon_only_mode)
+        self.button_layout.addWidget(toggle_button)
 
         # Reload button
         reload_button = QPushButton("Reload", self)
@@ -182,7 +173,7 @@ class MainWindow(QWidget):
         # Layout settings button
         config_button = QPushButton("Layout Settings", self)
         config_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
-        config_button.clicked.connect(lambda: self.show_settings())
+        config_button.clicked.connect(self.show_settings)
         self.button_layout.addWidget(config_button)
 
         # Adding the button layout to the main layout
@@ -192,27 +183,32 @@ class MainWindow(QWidget):
         self.setLayout(self.layout)
         self.resize(800, 600)
 
-    # Start the timer
-    def start_timer(self):
-        interval = self.interval_spinbox.value() * 1000  # Convert seconds to milliseconds
-        print(f"Starting timer with interval: {interval} ms")
-        self.timer.setInterval(interval)  # Set the new interval
-        self.timer.start()  # Start the timer
-        if not self.infinite_checkbox.isChecked():
-            print("One-time cleaning will be triggered after the interval.")
-            QTimer.singleShot(interval, self.stop_timer)  # Stop after one cycle if not infinite
-
-    def stop_timer(self):
-        print("Stopping timer.")
-        self.timer.stop()  # Stop the timer
-
-    # Function to open the settings window
+    def toggle_icon_only_mode(self):
+        # Alterna entre os modos e altera o layout da janela
+        self.icon_only_mode = not getattr(self, "icon_only_mode", False)
+        
+        # Alterar o texto do botão para refletir o novo estado
+        sender = self.sender()
+        if sender:
+            sender.setText("Layout" if self.icon_only_mode else "Toggle Icons Only")
+        
+        # Alterar o tamanho da janela
+        if self.icon_only_mode:
+            self.resize(200, 200)  # Tamanho menor predefinido
+            logger.debug("Layout mode enabled: Window resized to 200x200.")
+        else:
+            self.resize(800, 600)  # Tamanho padrão
+            logger.debug("Icon-only mode disabled: Window resized to 800x600.")
+    
     def show_settings(self):
         config_window = LayoutConfigWindow(self, self.label, self.button_layout)
         if config_window.exec() == QDialog.Accepted:
             background_color, font_size, button_color = config_window.get_values()
             change_theme(self, self.label, self.button_layout, background_color, font_size, button_color)
             save_settings(background_color, font_size, button_color)
+
+   
+    
 
 
 def main():
