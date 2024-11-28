@@ -30,6 +30,8 @@ from config.save_user_config import save_settings, load_settings
 logging.basicConfig(level=logging.DEBUG if os.getenv("ENV") == "development" else logging.WARNING)
 logger = logging.getLogger(__name__)
 
+env = os.getenv("Env", "production")
+
 # Layout settings window
 class LayoutConfigWindow(QDialog):
     def __init__(self, window, label, button_layout):
@@ -92,9 +94,14 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Orange")
-        icon_path = os.path.join(
-            os.path.dirname(__file__), "..", "assets", "images", "icons", "orange.ico"
-        )
+        if env == "development":
+            icon_path = os.path.join(
+                os.path.dirname(__file__), "..", "assets", "images", "icons", "orange.ico"
+            )
+        else:
+            icon_path = os.path.join(
+                os.path.dirname(__file__), "assets", "images", "icons", "orange.ico"
+            )
         self.setWindowIcon(QIcon(icon_path))
 
         # Load settings
@@ -117,9 +124,14 @@ class MainWindow(QWidget):
         self.layout.addWidget(self.label)
 
         # Background image path
-        background_images_path = os.path.join(
-            os.path.dirname(__file__), "..", "assets", "images", "background"
-        )
+        if env == "development":
+            background_images_path = os.path.join(
+                os.path.dirname(__file__), "..", "assets", "images", "background"
+            )
+        else:
+            background_images_path = os.path.join(
+                os.path.dirname(__file__), "assets", "images", "background"
+            )
         change_background(self.label, background_images_path)
 
         # Apply the loaded settings to the UI elements
