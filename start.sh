@@ -2,7 +2,7 @@
 
 # Detectar o sistema operacional
 OS=$(uname -s)
-
+export ENV=development
 # Configurações específicas para Linux
 if [ "$OS" == "Linux" ]; then
     echo "Detectado: Linux"

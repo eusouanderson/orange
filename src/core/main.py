@@ -107,7 +107,7 @@ class MainWindow(QWidget):
             )
         else:
             icon_path = os.path.join(
-                os.path.dirname(__file__), "assets", "images", "icons", "orange.ico"
+                os.path.dirname(__file__), "..", "assets", "images", "icons", "orange.ico"
             )
         self.setWindowIcon(QIcon(icon_path))
 
@@ -138,7 +138,7 @@ class MainWindow(QWidget):
             )
         else:
             background_images_path = os.path.join(
-                os.path.dirname(__file__), "assets", "images", "background"
+                os.path.dirname(__file__), "..", "assets", "images", "background"
             )
         change_background(self.label, background_images_path)
 
