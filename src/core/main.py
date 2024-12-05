@@ -141,7 +141,7 @@ class Calculator(QMainWindow):
 
     def on_backspace(self):
         current_text = self.result_display.text()
-        new_text = current_text[:-1]  # Remove the last character
+        new_text = current_text[:-1]  
         self.result_display.setText(new_text)
 
     def on_equal_click(self):
