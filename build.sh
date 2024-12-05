@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Definir variável de ambiente
+export ENV=production
+
+
 # Verifica o sistema operacional
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     PLATFORM="linux"
@@ -13,8 +17,8 @@ else
     echo "Unsupported OS type"
     exit 1
 fi
-# Definir variável de ambiente
-export ENV=production
+
+
 # Executa o script Python com a plataforma como argumento
 poetry run python src/compile/build.py $PLATFORM v0.1.1
 

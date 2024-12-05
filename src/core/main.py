@@ -1,239 +1,186 @@
+import sys
 import os
-import json
-import logging
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QIcon, QColor
+import math
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
-    QLabel,
-    QPushButton,
+    QMainWindow,
     QVBoxLayout,
-    QHBoxLayout,
     QWidget,
+    QPushButton,
     QLineEdit,
-    QSlider,
-    QColorDialog,
-    QDialog,
-    QDialogButtonBox,
-    QSpinBox,
-    QCheckBox
+    QGridLayout,
 )
-from watchdog.observers import Observer
-from reload import setup_reload_signal, ReloadHandler
-from config.clean import clean
-from config.background import change_background
-from config.themes import change_theme
-from config.choose import choose_background_color, choose_button_color
-from config.save_user_config import save_settings, load_settings
 
-# Components
-from components.CacheTimerControls import CacheTimerControls
-from components.BackgroundChanger import BackgroundChanger
-from components.LayoutSettingsDialog import LayoutSettingsDialog
+env = os.environ.get("ENV", "production")
 
-# Configuração do logger
-logging.basicConfig(level=logging.DEBUG if os.getenv("ENV") == "development" else logging.WARNING)
-logger = logging.getLogger(__name__)
-
-env = os.getenv("Env", "production")
-
-# Layout settings window
-class LayoutConfigWindow(QDialog):
-    def __init__(self, window, label, button_layout):
-        super().__init__(window)
-        self.setWindowTitle("Layout Settings")
-        self.setModal(True)
-
-        # Layout of the settings window
-        layout = QVBoxLayout()
-
-        # Text input for background color
-        self.background_input = QLineEdit(self)
-        self.background_input.setPlaceholderText("Background color (e.g., #FFA500)")
-        layout.addWidget(self.background_input)
-
-        # Button to choose background color
-        background_button = QPushButton("Choose Background Color", self)
-        background_button.clicked.connect(
-            lambda: choose_background_color(self.background_input)
-        )
-        layout.addWidget(background_button)
-
-        # Text input for button color
-        self.button_color_input = QLineEdit(self)
-        self.button_color_input.setPlaceholderText("Button color (e.g., #ffffff)")
-        layout.addWidget(self.button_color_input)
-
-        # Button to choose button color
-        button_button = QPushButton("Choose Button Color", self)
-        button_button.clicked.connect(
-            lambda: choose_button_color(self.button_color_input)
-        )
-        layout.addWidget(button_button)
-
-        # Slider for font size
-        self.font_slider = QSlider(Qt.Horizontal)
-        self.font_slider.setRange(10, 40)
-        self.font_slider.setValue(16)
-        layout.addWidget(self.font_slider)
-
-        # Confirmation buttons
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
-
-        # Applying the layout
-        self.setLayout(layout)
-        
-        
-
-    def get_values(self):
-        return (
-            self.background_input.text(),
-            self.font_slider.value(),
-            self.button_color_input.text(),
-        )
-
-
-# Main application class
-class MainWindow(QWidget):
+class Calculator(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Orange")
         if env == "development":
+
             icon_path = os.path.join(
-                os.path.dirname(__file__), "..", "assets", "images", "icons", "orange.ico"
+                os.path.dirname(__file__),
+                "..",
+                "assets",
+                "images",
+                "icons",
+                "orange.ico",
             )
         else:
             icon_path = os.path.join(
-                os.path.dirname(__file__), "assets", "images", "icons", "orange.ico"
+                os.path.dirname(__file__),  "assets", "images", "icons", "orange.ico"
             )
+        print(env)
+        print(icon_path)
+
         self.setWindowIcon(QIcon(icon_path))
+        self.setWindowTitle("Calculadora Orange")
+        self.setGeometry(300, 300, 400, 500)
 
-        # Load settings
-        settings = load_settings()
-        if settings:
-            self.background_color = settings.get('background_color', '#FFFFFF')
-            self.font_size = settings.get('font_size', 16)
-            self.button_color = settings.get('button_color', '#000000')
-        else:
-            self.background_color = "#FFFFFF"  # Default background color
-            self.font_size = 16  # Default font size
-            self.button_color = "#000000"  # Default button color
+        self.main_layout = QVBoxLayout()
 
-        # Main layout
-        self.layout = QVBoxLayout()
-        self.resizable = False
+        self.result_display = QLineEdit(self)
+        self.result_display.setAlignment(Qt.AlignRight)
+        self.result_display.setReadOnly(False)
+        self.result_display.setStyleSheet("font-size: 24px; padding: 10px;")
+        self.main_layout.addWidget(self.result_display)
 
-        # Title
-        self.label = QLabel("Orange!")
-        self.label.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(self.label)
+        self.button_layout = QGridLayout()
 
-        # Background image path
-        if env == "development":
-            background_images_path = os.path.join(
-                os.path.dirname(__file__), "..", "assets", "images", "background"
+        self.create_button("7", 0, 0)
+        self.create_button("8", 0, 1)
+        self.create_button("9", 0, 2)
+        self.create_button("/", 0, 3, "operator")
+        self.create_button("%", 0, 4, "operator")
+        self.create_button("sin", 0, 5, "trig")
+
+        self.create_button("4", 1, 0)
+        self.create_button("5", 1, 1)
+        self.create_button("6", 1, 2)
+        self.create_button("*", 1, 3, "operator")
+        self.create_button("√", 1, 4, "operator")
+        self.create_button("cos", 1, 5, "trig")
+        
+        
+
+        self.create_button("1", 2, 0)
+        self.create_button("2", 2, 1)
+        self.create_button("3", 2, 2)
+        self.create_button("-", 2, 3, "operator")
+        self.create_button("(", 2, 4, "parenthesis")
+        self.create_button("tan", 2, 5, "trig")
+        
+
+        self.create_button("0", 3, 0)
+        self.create_button(".", 3, 1)
+        self.create_button("=", 3, 2, "operator")
+        self.create_button("+", 3, 3, "operator")
+        self.create_button(")", 3, 4, "parenthesis")
+        self.create_button("log", 3, 5, "trig")
+
+
+        # Clear button
+        self.create_button("C", 4, 0, "clear")
+
+        
+
+        # Backspace button
+        self.create_button("←", 4, 1, "backspace")
+
+        
+
+        self.main_layout.addLayout(self.button_layout)
+
+        central_widget = QWidget()
+        central_widget.setLayout(self.main_layout)
+        self.setCentralWidget(central_widget)
+
+    def create_button(self, text, row, col, style=""):
+        button = QPushButton(text)
+        button.setStyleSheet("font-size: 18px; padding: 15px;")
+        button.clicked.connect(self.on_button_click)
+        if style == "operator":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightblue;"
             )
-        else:
-            background_images_path = os.path.join(
-                os.path.dirname(__file__), "assets", "images", "background"
+        elif style == "trig":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightgreen;"
             )
-        change_background(self.label, background_images_path)
+        elif style == "parenthesis":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightyellow;"
+            )
+        elif style == "clear":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightcoral;"
+            )
+        elif style == "backspace":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightgray;"
+            )
+        self.button_layout.addWidget(button, row, col)
 
+    def on_button_click(self):
+        button = self.sender()
+        text = button.text()
+        current_text = self.result_display.text()
 
-        # Layout for buttons (horizontal)
-        self.button_layout = QHBoxLayout()
-
-        # Timer controls component
-        self.timer = QTimer(self)
-        self.layout.addLayout(CacheTimerControls(self, self.timer, clean, self.button_color, self.button_layout))
-
-        # Blackground Changer component
-        self.layout.addWidget(BackgroundChanger(self, self.label, change_background, background_images_path, self.button_color))
-        
-
-        # Layout settings button component
-        '''self.button_widget = LayoutSettingsDialog(self, self.label, self.button_color, self.button_layout)
-        self.layout.addWidget(self.button_widget)'''
-
-        # PRECISA CRIAR UMA CLASSE AQUI PARA BAIXO PARA O LAYOUT DE CONFIGURAÇÕES
-        # Change icon only mode
-        toggle_button = QPushButton("Toggle Icons Only", self)
-        toggle_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
-        toggle_button.clicked.connect(self.toggle_icon_only_mode)
-        self.button_layout.addWidget(toggle_button)
-
-        # Reload button
-        reload_button = QPushButton("Reload", self)
-        reload_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
-        self.button_layout.addWidget(reload_button)
-
-        # Layout settings button
-        config_button = QPushButton("Layout Settings", self)
-        config_button.setStyleSheet(f"background-color: {self.button_color}; color: #FFFFFF;")
-        config_button.clicked.connect(self.show_settings)
-        self.button_layout.addWidget(config_button)
-
-        # Adding the button layout to the main layout
-        self.layout.addLayout(self.button_layout)
-
-        # Setting the final layout in the window
-        self.setLayout(self.layout)
-        self.resize(800, 600)
-
-    def toggle_icon_only_mode(self):
-        # Alterna entre os modos e altera o layout da janela
-        self.icon_only_mode = not getattr(self, "icon_only_mode", False)
-        
-        # Alterar o texto do botão para refletir o novo estado
-        sender = self.sender()
-        if sender:
-            sender.setText("Layout" if self.icon_only_mode else "Toggle Icons Only")
-        
-        # Alterar o tamanho da janela
-        if self.icon_only_mode:
-            self.resize(200, 200)  # Tamanho menor predefinido
-            logger.debug("Layout mode enabled: Window resized to 200x200.")
+        if text == "=":
+            self.on_equal_click()
+        elif text == "C":
+            self.result_display.clear()
+        elif text == "←":
+            self.on_backspace()
         else:
-            self.resize(800, 600)  # Tamanho padrão
-            logger.debug("Icon-only mode disabled: Window resized to 800x600.")
-    
-    def show_settings(self):
-        config_window = LayoutConfigWindow(self, self.label, self.button_layout)
-        if config_window.exec() == QDialog.Accepted:
-            background_color, font_size, button_color = config_window.get_values()
-            change_theme(self, self.label, self.button_layout, background_color, font_size, button_color)
-            save_settings(background_color, font_size, button_color)
+            new_text = current_text + text
+            self.result_display.setText(new_text)
 
-   
-    
+    def on_backspace(self):
+        current_text = self.result_display.text()
+        new_text = current_text[:-1]  # Remove the last character
+        self.result_display.setText(new_text)
 
+    def on_equal_click(self):
+        try:
+            expression = self.result_display.text()
+            print(expression)
 
-def main():
-    app = QApplication([])
+            # Verificando se as funções trigonométricas têm parênteses
+            if "sin" in expression and "(" not in expression:
+                self.result_display.setText("Erro: Ex: sin(45°), Falta parênteses")
+                return
+            if "cos" in expression and "(" not in expression:
+                self.result_display.setText("Erro: Ex: cos(45°), Falta parênteses")
+                return
+            if "tan" in expression and "(" not in expression:
+                self.result_display.setText("Erro: Ex: tan(45°), Falta parênteses")
+                return
 
-    window = MainWindow()
-    window.show()
+            expression = expression.replace("sin", "math.sin(math.radians")
+            expression = expression.replace("cos", "math.cos(math.radians")
+            expression = expression.replace("tan", "math.tan(math.radians")
 
-    # Setting up the reload signal
-    reload_signal = setup_reload_signal()
-    reload_signal.reload_signal.connect(reload_signal.reload_app)
+            if "sin" in expression or "cos" in expression or "tan" in expression:
+                expression = expression.replace("√", "math.sqrt")
+                expression = expression + ")"
+            else:
+                expression = expression.replace(")", " ")
 
-    # Observer for changes
-    event_handler = ReloadHandler(reload_signal)
-    observer = Observer()
-    observer.schedule(event_handler, path=os.path.dirname(__file__), recursive=True)
-    observer.start()
+            result = eval(expression)
+            result = round(result, 2)
 
-    try:
-        app.exec()
-    finally:
-        observer.stop()
-        observer.join()
+            self.result_display.setText(str(result))
+        except Exception as e:
+            self.result_display.setText("Erro")
+            print(f"Erro: {e}")
 
 
 if __name__ == "__main__":
-    logger.debug("Application started")
-    main()
+    app = QApplication(sys.argv)
+    window = Calculator()
+    window.show()
+    sys.exit(app.exec())

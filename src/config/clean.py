@@ -30,7 +30,9 @@ def clean():
                             print(f"Permissão negada para remover {file_path}")
 
             # Executar comandos para limpeza do sistema
-            subprocess.run(["runas", "/user:Administrator", clean_cmd], shell=True)  # Exigir privilégios de admin
+            subprocess.run(
+                ["runas", "/user:Administrator", clean_cmd], shell=True
+            )  # Exigir privilégios de admin
             subprocess.run([cleanmgr, "/sagerun:1"], shell=True)
 
         except Exception as e:
@@ -56,9 +58,11 @@ def clean():
                                 shutil.rmtree(file_path)
                         except PermissionError:
                             print(f"Permissão negada para remover {file_path}")
-            
+
             # Executar comandos para limpeza
-            subprocess.run(["sudo", clean_cmd], shell=True)  # Exigir privilégios de sudo
+            subprocess.run(
+                ["sudo", clean_cmd], shell=True
+            )  # Exigir privilégios de sudo
             print("Limpeza concluída no Linux.")
 
         except Exception as e:
@@ -84,7 +88,7 @@ def clean():
                                 shutil.rmtree(file_path)
                         except PermissionError:
                             print(f"Permissão negada para remover {file_path}")
-            
+
             # Executar comandos para limpeza
             subprocess.run(clean_cmd, shell=True)
             print("Limpeza concluída no macOS.")
