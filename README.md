@@ -101,7 +101,7 @@ Build para Produção:
 ```bash
     ./build.sh
 ```
-- Na raiz do seu projeto na pasta **dist** encontrar um arquivo compactado com nome:
+- Na raiz do seu projeto na pasta **dist** encontrara um arquivo compactado com nome:
 ```bash
     Orange-v0.1.1
 ```
