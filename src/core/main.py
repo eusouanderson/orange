@@ -182,6 +182,7 @@ class Calculator(QMainWindow):
             )
 
         self.button_layout.addWidget(button, row, col)
+
     def show_help(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Ajuda - Atalhos do Teclado")
@@ -239,7 +240,6 @@ class Calculator(QMainWindow):
             self.show_history()
         elif text == "Help":
             self.show_help()
-
 
         else:
             new_text = current_text + text

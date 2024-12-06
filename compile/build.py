@@ -5,12 +5,16 @@ import shutil
 import logging
 import zipfile
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def ensure_dir_exists(directory):
     """Cria um diretório, se não existir."""
     os.makedirs(directory, exist_ok=True)
+
 
 def resource_path(relative_path):
     """Obtém o caminho correto para recursos dependendo do ambiente."""
@@ -19,6 +23,7 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
+
 
 def clean_output_dir(output_dir, exe_name=None):
     """Limpa o diretório de saída, mantendo o executável, se especificado."""
@@ -33,6 +38,7 @@ def clean_output_dir(output_dir, exe_name=None):
                 os.remove(item_path)
     logger.info("Diretório de saída limpo.")
 
+
 def prepare_pyx(source_file, pyx_file):
     """Cria um arquivo .pyx a partir de um script Python."""
     try:
@@ -42,12 +48,12 @@ def prepare_pyx(source_file, pyx_file):
         logger.error(f"Erro ao criar o arquivo .pyx: {e}")
         raise
 
+
 def copy_src_files(src_dir, output_dir):
     """Função para copiar arquivos do diretório src para o diretório de saída."""
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    # Copiar todos os arquivos e subdiretórios de src_dir para output_dir
     for item in os.listdir(src_dir):
         s = os.path.join(src_dir, item)
         d = os.path.join(output_dir, item)
@@ -57,17 +63,23 @@ def copy_src_files(src_dir, output_dir):
             shutil.copy2(s, d)
     logger.info(f"Arquivos copiados de {src_dir} para {output_dir}")
 
+
 def compile_pyx_to_c(pyx_file, output_dir):
     """Compila o arquivo .pyx para C."""
-    output_c_file = os.path.join(output_dir, os.path.basename(pyx_file).replace(".pyx", ".c"))
+    output_c_file = os.path.join(
+        output_dir, os.path.basename(pyx_file).replace(".pyx", ".c")
+    )
     command = ["cython", "-3", "-o", output_c_file, pyx_file]
     logger.info(f"Compilando .pyx para .c: {command}")
     try:
-        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(
+            command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         logger.info(f"Arquivo .c gerado: {output_c_file}")
     except subprocess.CalledProcessError as e:
         logger.error(f"Erro ao compilar .pyx: {e.stderr.decode()}")
         raise
+
 
 def compile_all_src_files(src_dir, output_dir):
     """Compila todos os arquivos Python em src_dir para arquivos .pyx e depois para .c."""
@@ -78,6 +90,7 @@ def compile_all_src_files(src_dir, output_dir):
                 pyx_file = os.path.join(output_dir, f"{os.path.splitext(file)[0]}.pyx")
                 prepare_pyx(py_file, pyx_file)
                 compile_pyx_to_c(pyx_file, output_dir)
+
 
 def build_executable(platform, script_path, output_dir, icon_path, compile_all=False):
     """Função para compilar o projeto em um executável para o sistema especificado."""
@@ -98,8 +111,7 @@ def build_executable(platform, script_path, output_dir, icon_path, compile_all=F
 
     src_dir = os.path.join(project_dir, "..", "src")
     logger.info(f"Diretório src: {src_dir}")
-
-    # Compilação dos arquivos Python para C com Cython
+    
     if compile_all:
         compile_all_src_files(src_dir, output_dir)
     else:
@@ -128,7 +140,7 @@ def build_executable(platform, script_path, output_dir, icon_path, compile_all=F
         "--name",
         "Orange",
         script_name,
-        f"--upx-dir={upx_dir}" 
+        f"--upx-dir={upx_dir}",
     ]
 
     if platform in ["windows", "linux"]:
@@ -137,31 +149,38 @@ def build_executable(platform, script_path, output_dir, icon_path, compile_all=F
     logger.info(f"Compilando para {platform}...")
 
     try:
-        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(
+            command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         logger.info(f"Compilação bem-sucedida: {result.stdout.decode()}")
     except subprocess.CalledProcessError as e:
-        error_message = e.stderr.decode() if e.stderr else "Nenhuma saída de erro disponível"
+        error_message = (
+            e.stderr.decode() if e.stderr else "Nenhuma saída de erro disponível"
+        )
         logger.error(f"Erro durante a compilação: {error_message}")
         logger.error(f"Código de retorno: {e.returncode}")
-        logger.error(f"Saída completa: {e.output.decode() if e.output else 'Sem saída'}")
+        logger.error(
+            f"Saída completa: {e.output.decode() if e.output else 'Sem saída'}"
+        )
         sys.exit(1)
 
     clean_output_dir(output_dir, "Orange.exe" if platform == "windows" else "Orange")
 
     return os.path.join(output_dir, "Orange.exe" if platform == "windows" else "Orange")
 
+
 def compact_output(output_dir, zip_path):
     """Compacta o conteúdo do diretório de saída em um arquivo ZIP."""
-    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(output_dir):
             for file in files:
                 file_path = os.path.join(root, file)
-                
+
                 if file_path == zip_path:
-                    continue  
+                    continue
                 arcname = os.path.relpath(file_path, output_dir)
                 zipf.write(file_path, arcname)
-    
+
     logger.info(f"Projeto compactado em: {zip_path}")
 
 
@@ -203,24 +222,29 @@ def main():
     tag = sys.argv[2]
     compile_all = "--compile-all" in sys.argv
 
-    repo = sys.argv[3] if len(sys.argv) > 3 and not sys.argv[3].startswith("--") else "eusouanderson/orange_calculator"
+    repo = (
+        sys.argv[3]
+        if len(sys.argv) > 3 and not sys.argv[3].startswith("--")
+        else "eusouanderson/orange"
+    )
 
     if platform not in ["windows", "linux"]:
         logger.error("Plataforma inválida. Escolha entre 'windows' ou 'linux'.")
-        sys.exit(1) 
+        sys.exit(1)
 
     project_dir = os.path.abspath(os.path.dirname(__file__))
     output_dir = "dist"
     script_path = os.path.join(project_dir, "src", "core", "main.py")
-    icon_path = os.path.join(project_dir, "src", "assets", "images", "icons", "orange.ico")
+    icon_path = os.path.join(
+        project_dir, "src", "assets", "images", "icons", "orange.ico"
+    )
     zip_path = os.path.join(output_dir, f"Orange-{tag}.zip")
 
     clean_output_dir(output_dir)
     build_executable(platform, script_path, output_dir, icon_path, compile_all)
     compact_output(output_dir, zip_path)
-    
-    upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
 
+    upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
 
 
 if __name__ == "__main__":

@@ -11,4 +11,4 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Comando de inicialização do projeto
-CMD ["python", "src/main.py"]
+CMD ["python", "src/core/main.py"]
