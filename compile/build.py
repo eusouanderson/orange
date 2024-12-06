@@ -150,39 +150,47 @@ def build_executable(platform, script_path, output_dir, icon_path, compile_all=F
 
     return os.path.join(output_dir, "Orange.exe" if platform == "windows" else "Orange")
 
-
 def compact_output(output_dir, zip_path):
-    """Compacta o conteúdo do diretório de saída."""
-    ensure_dir_exists(os.path.dirname(zip_path))
+    """Compacta o conteúdo do diretório de saída, evitando compactar o próprio arquivo ZIP."""
+    
+
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(output_dir):
             for file in files:
                 file_path = os.path.join(root, file)
+                
+                if file_path == zip_path:
+                    continue  
                 arcname = os.path.relpath(file_path, output_dir)
                 zipf.write(file_path, arcname)
+    
     logger.info(f"Projeto compactado em: {zip_path}")
 
-def upload_to_github_release(file_path, tag, release_name, repo):
-    """Faz upload do arquivo para o GitHub Release."""
-    command = [
-        "gh",
-        "release",
-        "create",
-        tag,
-        file_path,
-        "--repo",
-        repo,
-        "--title",
-        release_name,
-        "--notes",
-        f"Release {release_name}",
-    ]
+def upload_to_github_release(file_path, tag, release_name, repo, platform):
+    """Faz upload de um arquivo para o release do GitHub usando o CLI do GitHub."""
+    logger.info(f"Enviando {file_path} para o release do GitHub...")
     try:
-        subprocess.run(command, check=True)
+        subprocess.run(
+            [
+                "gh",
+                "release",
+                "create",
+                tag,
+                file_path,
+                "--repo",
+                repo,
+                "--title",
+                release_name,
+                "--notes",
+                f"Release {release_name} Platform: {platform}",
+            ],
+            check=True,
+        )
         logger.info("Upload concluído com sucesso.")
     except subprocess.CalledProcessError as e:
-        logger.error(f"Erro ao enviar para o GitHub Release: {e.stderr.decode()}")
-        raise
+        logger.error("Erro ao enviar para o GitHub Release:", e)
+        sys.exit(1)
+
 
 def main():
     if len(sys.argv) < 3:
@@ -200,15 +208,15 @@ def main():
         sys.exit(1)
 
     project_dir = os.path.abspath(os.path.dirname(__file__))
-    output_dir = os.path.join(project_dir, "dist")
+    output_dir = "dist"
     script_path = os.path.join(project_dir, "src", "core", "main.py")
     icon_path = os.path.join(project_dir, "src", "assets", "images", "icons", "orange.ico")
-    zip_path = os.path.join(output_dir, "orange_project.zip")
+    zip_path = os.path.join(output_dir, f"Orange-{tag}.zip")
 
     clean_output_dir(output_dir)
     build_executable(platform, script_path, output_dir, icon_path, compile_all)
     compact_output(output_dir, zip_path)
-    upload_to_github_release(zip_path, tag, f"Orange {tag}", "eusouanderson/orange")
+    upload_to_github_release(zip_path, tag, f"Orange {tag}", "eusouanderson/orange", platform)
 
 if __name__ == "__main__":
     main()
