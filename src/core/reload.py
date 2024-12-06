@@ -5,7 +5,6 @@ from watchdog.events import FileSystemEventHandler
 from PySide6.QtCore import Signal, QObject, QCoreApplication
 
 
-
 class ReloadSignal(QObject):
     reload_signal = Signal()
 

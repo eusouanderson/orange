@@ -2,7 +2,7 @@ import sys
 import os
 
 
-if not hasattr(sys, 'frozen'):  
+if not hasattr(sys, "frozen"):
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QIcon
     from PySide6.QtWidgets import (
@@ -16,7 +16,7 @@ if not hasattr(sys, 'frozen'):
         QTextEdit,
     )
 else:
-    
+
     from PySide6.QtCore import Qt
     from PySide6.QtGui import QIcon
     from PySide6.QtWidgets import (
@@ -94,15 +94,32 @@ class Calculator(QMainWindow):
 
     def create_buttons(self):
         buttons = [
-            ("7", 0, 0), ("8", 0, 1), ("9", 0, 2), ("/", 0, 3, "operator"),
-            ("%", 0, 4, "operator"), ("sin", 0, 5, "trig"),
-            ("4", 1, 0), ("5", 1, 1), ("6", 1, 2), ("*", 1, 3, "operator"),
-            ("√", 1, 4, "operator"), ("cos", 1, 5, "trig"),
-            ("1", 2, 0), ("2", 2, 1), ("3", 2, 2), ("-", 2, 3, "operator"),
-            ("(", 2, 4, "parenthesis"), ("tan", 2, 5, "trig"),
-            ("0", 3, 0), (".", 3, 1), ("=", 3, 2, "operator"),
-            ("+", 3, 3, "operator"), (")", 3, 4, "parenthesis"),
-            ("log", 3, 5, "trig"), ("C", 4, 0, "clear"), ("←", 4, 1, "backspace"),
+            ("7", 0, 0),
+            ("8", 0, 1),
+            ("9", 0, 2),
+            ("/", 0, 3, "operator"),
+            ("%", 0, 4, "operator"),
+            ("sin", 0, 5, "trig"),
+            ("4", 1, 0),
+            ("5", 1, 1),
+            ("6", 1, 2),
+            ("*", 1, 3, "operator"),
+            ("√", 1, 4, "operator"),
+            ("cos", 1, 5, "trig"),
+            ("1", 2, 0),
+            ("2", 2, 1),
+            ("3", 2, 2),
+            ("-", 2, 3, "operator"),
+            ("(", 2, 4, "parenthesis"),
+            ("tan", 2, 5, "trig"),
+            ("0", 3, 0),
+            (".", 3, 1),
+            ("=", 3, 2, "operator"),
+            ("+", 3, 3, "operator"),
+            (")", 3, 4, "parenthesis"),
+            ("log", 3, 5, "trig"),
+            ("C", 4, 0, "clear"),
+            ("←", 4, 1, "backspace"),
         ]
 
         for button in buttons:
@@ -169,14 +186,14 @@ class Calculator(QMainWindow):
         self.result_display.setText(new_text)
 
     def on_equal_click(self):
-        
+
         try:
             expression = self.result_display.text()
-            
+
             expression = expression.replace("√", "math.sqrt(")
             if "sqrt" in expression:
                 expression = expression + ")"
-                
+
             expression = expression.replace("sin", "math.sin(math.radians")
             expression = expression.replace("cos", "math.cos(math.radians")
             expression = expression.replace("tan", "math.tan(math.radians")
@@ -185,18 +202,18 @@ class Calculator(QMainWindow):
                 expression = expression + ")"
 
             print(expression)
-            
-
 
             result = eval(expression)
-           
+
             result_text = str(round(result, 2))
-            
+
             # Atualiza o display do resultado
             self.result_display.setText(result_text)
-            
+
             # Adiciona a expressão e o resultado na memória
-            self.memory_display.append(f"{self.expression_replace(expression)} = {result_text}")
+            self.memory_display.append(
+                f"{self.expression_replace(expression)} = {result_text}"
+            )
 
         except Exception as e:
             # Tratamento de erro aprimorado

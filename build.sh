@@ -18,9 +18,11 @@ else
     exit 1
 fi
 
+poetry run python src/compile/build.py $PLATFORM v0.1.1 eusouanderson/orange_calculatore
+
+# REPOSITORIO CALCULADORA /eusouanderson/orange_calculator
 
 
-poetry run python src/compile/build.py $PLATFORM v0.1.1 --compile-all
 
 
 if [[ "$PLATFORM" == "windows" ]]; then

@@ -151,9 +151,7 @@ def build_executable(platform, script_path, output_dir, icon_path, compile_all=F
     return os.path.join(output_dir, "Orange.exe" if platform == "windows" else "Orange")
 
 def compact_output(output_dir, zip_path):
-    """Compacta o conteúdo do diretório de saída, evitando compactar o próprio arquivo ZIP."""
-    
-
+    """Compacta o conteúdo do diretório de saída em um arquivo ZIP."""
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(output_dir):
             for file in files:
@@ -165,6 +163,7 @@ def compact_output(output_dir, zip_path):
                 zipf.write(file_path, arcname)
     
     logger.info(f"Projeto compactado em: {zip_path}")
+
 
 def upload_to_github_release(file_path, tag, release_name, repo, platform):
     """Faz upload de um arquivo para o release do GitHub usando o CLI do GitHub."""
@@ -194,18 +193,21 @@ def upload_to_github_release(file_path, tag, release_name, repo, platform):
 
 def main():
     if len(sys.argv) < 3:
-        logger.error("Uso: python build.py <platform> <tag> [--compile-all]")
+        logger.error("Uso: python build.py <platform> <tag> [repo] [--compile-all] ")
         logger.error("Plataformas: windows, linux")
-        logger.error("--compile-all: Compilar todos os arquivos Python.")
+        logger.error("[repo]: Repositório GitHub para upload.")
+        logger.error("[--compile-all]: Compilar todos os arquivos Python.")
         sys.exit(1)
 
     platform = sys.argv[1].lower()
     tag = sys.argv[2]
     compile_all = "--compile-all" in sys.argv
 
+    repo = sys.argv[3] if len(sys.argv) > 3 and not sys.argv[3].startswith("--") else "eusouanderson/orange_calculator"
+
     if platform not in ["windows", "linux"]:
         logger.error("Plataforma inválida. Escolha entre 'windows' ou 'linux'.")
-        sys.exit(1)
+        sys.exit(1) 
 
     project_dir = os.path.abspath(os.path.dirname(__file__))
     output_dir = "dist"
@@ -216,7 +218,10 @@ def main():
     clean_output_dir(output_dir)
     build_executable(platform, script_path, output_dir, icon_path, compile_all)
     compact_output(output_dir, zip_path)
-    upload_to_github_release(zip_path, tag, f"Orange {tag}", "eusouanderson/orange", platform)
+    
+    upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
+
+
 
 if __name__ == "__main__":
     main()
