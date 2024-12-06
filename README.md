@@ -4,7 +4,8 @@
 
 O **Orange Framework** é um micro framework projetado para facilitar o processo de compilação de Python para Cython. Ele também automatiza a criação de diretórios em ambientes de desenvolvimento (dev) ou produção (prod). Além disso, o framework inclui scripts de automação para build, testes e deploy diretamente para o GitHub Releases.
 
-Após ser compilado com o Cython, o projeto pode ser convertido em um executável utilizando o **PyInstaller**, o que facilita a distribuição e execução do projeto sem a necessidade de instalar o Python.
+Após ser compilado com o Cython, o projeto é convertido em um executável utilizando o **PyInstaller**, o que facilita a distribuição e execução do projeto sem a necessidade de instalar o Python (Por enquanto.).
+A grande vantagem desse framework é que ele resolve o problema comum de inconsistências de diretório durante a execução. Normalmente, em alguns casos, o local onde o Python está sendo executado pode ser diferente do diretório onde o arquivo está, o que pode causar problemas ao tentar acessar ou manipular arquivos. Esse framework garante que o ambiente de execução e o caminho dos arquivos sejam sempre tratados de forma correta, evitando esse tipo de erro.
 
 ### Funcionalidades:
 
@@ -82,7 +83,7 @@ Onde **repo** é o caminho estático do repositório. Exemplo:
 ```bash
     ./build.sh eusouanderson/orange --compile-all 
 ```
-
+****Atenção: A estrutura do projeto deve ser mantida intacta, pois é fundamental para a organização e o bom funcionamento do código. Inicialmente, o projeto deve conter as pastas src/core, além das pastas compile, dist, docs e reload na raiz do projeto. A estrutura deve ser preservada à medida que o projeto evolui, permitindo a adição de novos módulos ou componentes conforme necessário. Manter essa organização desde o início facilita a escalabilidade, a manutenção e a colaboração no desenvolvimento, garantindo que tudo funcione corretamente .****
 
 ## Testar Localmente
 
