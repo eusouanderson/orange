@@ -1,4 +1,4 @@
-# Orange Framework: Python Micro Framework for Cython Compilation
+# Orange: Python Micro Framework for Cython Compilation
 
 ## Overview
 
