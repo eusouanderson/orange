@@ -1,5 +1,5 @@
 import sys
-import os
+from os import environ, path
 import math
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
@@ -11,18 +11,22 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLineEdit,
     QGridLayout,
+    QDialog,
+    QTextEdit,
 )
+import cython
 
-env = os.environ.get("ENV", "production")
+env = environ.get("ENV", "production")
 
 class Calculator(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Orange")
+        self.history = []
         if env == "development":
 
-            icon_path = os.path.join(
-                os.path.dirname(__file__),
+            icon_path = path.join(
+                path.dirname(__file__),
                 "..",
                 "assets",
                 "images",
@@ -30,11 +34,9 @@ class Calculator(QMainWindow):
                 "orange.ico",
             )
         else:
-            icon_path = os.path.join(
-                os.path.dirname(__file__),  "assets", "images", "icons", "orange.ico"
+            icon_path = path.join(
+                path.dirname(__file__),  "assets", "images", "icons", "orange.ico"
             )
-        print(env)
-        print(icon_path)
 
         self.setWindowIcon(QIcon(icon_path))
         self.setWindowTitle("Calculadora Orange")
@@ -90,6 +92,9 @@ class Calculator(QMainWindow):
         # Backspace button
         self.create_button("←", 4, 1, "backspace")
 
+        # Botão para exibir o histórico
+        self.create_button("Hist", 4, 2, "history")
+
         
 
         self.main_layout.addLayout(self.button_layout)
@@ -124,6 +129,21 @@ class Calculator(QMainWindow):
             )
         self.button_layout.addWidget(button, row, col)
 
+    def show_history(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Histórico de Operações")
+        dialog.setGeometry(100, 100, 400, 300)
+
+        text_edit = QTextEdit(dialog)
+        text_edit.setReadOnly(True)
+        text_edit.setText("\n".join(self.history))
+        layout = QVBoxLayout()
+        layout.addWidget(text_edit)
+        dialog.setLayout(layout)
+
+        dialog.exec()
+
+
     def on_button_click(self):
         button = self.sender()
         text = button.text()
@@ -135,6 +155,9 @@ class Calculator(QMainWindow):
             self.result_display.clear()
         elif text == "←":
             self.on_backspace()
+        elif text == "Hist":
+            self.show_history()
+
         else:
             new_text = current_text + text
             self.result_display.setText(new_text)
@@ -147,9 +170,7 @@ class Calculator(QMainWindow):
     def on_equal_click(self):
         try:
             expression = self.result_display.text()
-            print(expression)
-
-            # Verificando se as funções trigonométricas têm parênteses
+            
             if "sin" in expression and "(" not in expression:
                 self.result_display.setText("Erro: Ex: sin(45°), Falta parênteses")
                 return
@@ -163,15 +184,21 @@ class Calculator(QMainWindow):
             expression = expression.replace("sin", "math.sin(math.radians")
             expression = expression.replace("cos", "math.cos(math.radians")
             expression = expression.replace("tan", "math.tan(math.radians")
+            expression = expression.replace("√", "math.sqrt(")
 
-            if "sin" in expression or "cos" in expression or "tan" in expression:
-                expression = expression.replace("√", "math.sqrt")
+            if "sin" in expression or "cos" in expression or "tan" in expression or "sqrt" in expression:
+                
                 expression = expression + ")"
+
             else:
                 expression = expression.replace(")", " ")
 
+            print(expression)
+            
             result = eval(expression)
-            result = round(result, 2)
+            #result = round(result, 2)
+
+            self.history.append(f"{expression} = {result}")
 
             self.result_display.setText(str(result))
         except Exception as e:
