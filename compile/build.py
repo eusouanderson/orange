@@ -49,19 +49,31 @@ def prepare_pyx(source_file, pyx_file):
         raise
 
 
+import os
+import shutil
+import logging
+
+logger = logging.getLogger(__name__)
+
 def copy_src_files(src_dir, output_dir):
-    """Função para copiar arquivos do diretório src para o diretório de saída."""
+    """Função para copiar arquivos do diretório src para o diretório de saída, excluindo a pasta 'core'."""
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
     for item in os.listdir(src_dir):
+        if item == "core":  
+            continue  
+
         s = os.path.join(src_dir, item)
         d = os.path.join(output_dir, item)
+
         if os.path.isdir(s):
             shutil.copytree(s, d, dirs_exist_ok=True)
         else:
             shutil.copy2(s, d)
-    logger.info(f"Arquivos copiados de {src_dir} para {output_dir}")
+    
+    logger.info(f"Arquivos copiados de {src_dir} para {output_dir}, exceto a pasta 'core'")
+
 
 
 def compile_pyx_to_c(pyx_file, output_dir):

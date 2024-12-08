@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QTextEdit,
 )
-import cython
+from exchange_rate import get_exchange_rate
 
 env = environ.get("ENV", "production")
 
@@ -24,6 +24,7 @@ class Calculator(QMainWindow):
         super().__init__()
         self.setWindowTitle("Orange")
         self.history = []
+        
         if env == "development":
 
             icon_path = path.join(
@@ -42,7 +43,7 @@ class Calculator(QMainWindow):
         self.setWindowIcon(QIcon(icon_path))
         self.setWindowTitle("Calculadora Orange")
         self.setGeometry(300, 300, 400, 500)
-        self.setFixedSize(380, 400)
+        self.setFixedSize(700, 400)
 
         self.main_layout = QVBoxLayout()
 
@@ -60,6 +61,7 @@ class Calculator(QMainWindow):
         self.create_button("/", 0, 3, "operator")
         self.create_button("%", 0, 4, "operator")
         self.create_button("sin", 0, 5, "trig")
+        self.create_button("BRL:USD", 0, 6, "exchange")
 
         self.create_button("4", 1, 0)
         self.create_button("5", 1, 1)
@@ -67,6 +69,7 @@ class Calculator(QMainWindow):
         self.create_button("*", 1, 3, "operator")
         self.create_button("√", 1, 4, "operator")
         self.create_button("cos", 1, 5, "trig")
+        self.create_button("USD:BRL", 1, 6, "exchange")
 
         self.create_button("1", 2, 0)
         self.create_button("2", 2, 1)
@@ -74,6 +77,7 @@ class Calculator(QMainWindow):
         self.create_button("-", 2, 3, "operator")
         self.create_button("(", 2, 4, "parenthesis")
         self.create_button("tan", 2, 5, "trig")
+        self.create_button("BRL:EUR", 2, 6, "exchange")
 
         self.create_button("0", 3, 0)
         self.create_button(".", 3, 1)
@@ -81,21 +85,23 @@ class Calculator(QMainWindow):
         self.create_button("+", 3, 3, "operator")
         self.create_button(")", 3, 4, "parenthesis")
         self.create_button("log", 3, 5, "trig")
+        self.create_button("BRL:GBP", 3, 6, "exchange")
 
         self.create_button("C", 4, 0, "clear")
-
         self.create_button("←", 4, 1, "backspace")
-
         self.create_button("Hist", 4, 2, "history")
-
         self.create_button("Help", 4, 3, "help")
-
+        self.create_button(":", 4, 4, "exchange")
+        self.create_button("BRL:JPY", 4, 5, "exchange")
+        self.create_button("BRL:BTC", 4, 6, "exchange")
+        
         self.main_layout.addLayout(self.button_layout)
 
         central_widget = QWidget()
         central_widget.setLayout(self.main_layout)
         self.setCentralWidget(central_widget)
 
+        
     def keyPressEvent(self, event: QKeyEvent):
         """
         Método para capturar a tecla pressionada no teclado e realizar a ação correspondente.
@@ -154,7 +160,7 @@ class Calculator(QMainWindow):
 
     def create_button(self, text, row, col, style=""):
         button = QPushButton(text)
-        button.setStyleSheet("font-size: 18px; padding: 15px;")
+        button.setStyleSheet("font-size: 15px; padding: 15px;")
         button.clicked.connect(self.on_button_click)
         if style == "operator":
             button.setStyleSheet(
@@ -230,6 +236,23 @@ class Calculator(QMainWindow):
         text = button.text()
         current_text = self.result_display.text()
 
+        exchange_pairs = {
+            "BRL:USD": ("BRL", "USD"),
+            "USD:BRL": ("USD", "BRL"),
+            "BRL:EUR": ("BRL", "EUR"),
+            "EUR:BRL": ("EUR", "BRL"),
+            "USD:EUR": ("USD", "EUR"),
+            "EUR:USD": ("EUR", "USD"),
+            "BRL:GBP": ("BRL", "GBP"),
+            "GBP:BRL": ("GBP", "BRL"),
+            "BRL:JPY": ("BRL", "JPY"),
+            "JPY:BRL": ("JPY", "BRL"),
+            "USD:JPY": ("USD", "JPY"),
+            "JPY:USD": ("JPY", "USD"),
+            "BRL:BTC": ("BRL", "BTC"),
+            "BTC:BRL": ("BTC", "BRL"),
+        }
+
         if text == "=":
             self.on_equal_click()
         elif text == "C":
@@ -240,7 +263,13 @@ class Calculator(QMainWindow):
             self.show_history()
         elif text == "Help":
             self.show_help()
-
+        elif text in exchange_pairs:
+            from_currency, to_currency = exchange_pairs[text]
+            rate = get_exchange_rate(from_currency=from_currency, to_currency=to_currency)
+            formatted_rate = str(rate) if to_currency != "BTC" else str(rate)
+            self.result_display.setText(self.result_display.text() + formatted_rate)
+        
+            
         else:
             new_text = current_text + text
             self.result_display.setText(new_text)
@@ -278,7 +307,7 @@ class Calculator(QMainWindow):
 
                 expression = expression + ")"
 
-            else:
+            elif "%" in expression:
                 expression = expression.replace(")", " ")
 
             print(expression)
