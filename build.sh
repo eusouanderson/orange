@@ -79,4 +79,4 @@ poetry run python compile/build.py $PLATFORM v$NEW_VERSION
 
 # Cria a release no GitHub
 echo "Criando a release no GitHub com a versão $NEW_VERSION..."
-gh release create v$NEW_VERSION dist/Orange.exe --repo eusouanderson/orange --title "Orange $NEW_VERSION" --notes "Release Orange $NEW_VERSION Platform: $PLATFORM"
+gh release create v$NEW_VERSION dist/Orange.exe --repo eusouanderson/orange_calculator --title "Orange $NEW_VERSION" --notes "Release Orange $NEW_VERSION Platform: $PLATFORM"
