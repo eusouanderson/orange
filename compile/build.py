@@ -242,7 +242,7 @@ def commit_and_push_changes(repo, tag, commit_message="Atualização do build co
 
 def main():
     if len(sys.argv) < 3:
-        logger.error("Uso: python build.py <platform> <tag> [repo] [--compile-all] ")
+        logger.error("Uso: python build.py <platform> <tag> [repo] [--compile-all]")
         logger.error("Plataformas: windows, linux")
         logger.error("[repo]: Repositório GitHub para upload.")
         logger.error("[--compile-all]: Compilar todos os arquivos Python.")
@@ -269,18 +269,26 @@ def main():
         project_dir, "src", "assets", "images", "icons", "orange.ico"
     )
     zip_path = os.path.join(output_dir, f"Orange-{tag}.zip")
-    console_commit_input = input("Digite o commit  para o repositório: ")
-    console_repo_input = input("Digite o repositório para o repositório: ")
-    
 
-    clean_output_dir(output_dir)
-    build_executable(platform, script_path, output_dir, icon_path, compile_all)
-    compact_output(output_dir, zip_path)
+    try:
+        console_commit_input = input("Digite o commit para o repositório: ").strip()
+        console_repo_input = input("Digite o repositório para o upload: ").strip()
 
-    commit_and_push_changes(console_repo_input, tag, console_commit_input)
+        if not console_commit_input or not console_repo_input:
+            raise ValueError("Commit ou repositório inválidos.")
 
-    upload_to_github_release(zip_path, tag, f"Orange {tag}", console_commit_input, platform)
+        clean_output_dir(output_dir)
+        build_executable(platform, script_path, output_dir, icon_path, compile_all)
+        compact_output(output_dir, zip_path)
 
+        commit_and_push_changes(console_repo_input, tag, console_commit_input)
+        upload_to_github_release(
+            zip_path, tag, f"Orange {tag}", console_commit_input, platform
+        )
+    except subprocess.CalledProcessError as e:
+        logger.error("Erro ao executar subprocesso: %s", e.stderr.decode())
+    except Exception as e:
+        logger.error("Erro durante a execução: %s", str(e))
 
 if __name__ == "__main__":
     main()
