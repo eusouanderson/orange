@@ -221,6 +221,24 @@ def upload_to_github_release(file_path, tag, release_name, repo, platform):
         logger.error("Erro ao enviar para o GitHub Release:", e)
         sys.exit(1)
 
+def commit_and_push_changes(repo, tag, commit_message="Atualização do build com src"):
+    """Faz commit e push das alterações no repositório Git."""
+    try:
+        
+        subprocess.run(["git", "add", "."], check=True)
+        
+        
+        subprocess.run(["git", "commit", "-m", commit_message], check=True)
+        
+        
+        subprocess.run(["git", "push", "origin", "main"], check=True)
+        
+        logger.info("Alterações comprometidas e enviadas para o repositório com sucesso.")
+    except subprocess.CalledProcessError as e:
+        logger.error("Erro ao fazer commit ou push no repositório Git:", e)
+        sys.exit(1)
+
+
 
 def main():
     if len(sys.argv) < 3:
@@ -237,7 +255,7 @@ def main():
     repo = (
         sys.argv[3]
         if len(sys.argv) > 3 and not sys.argv[3].startswith("--")
-        else "eusouanderson/orange"
+        else "eusouanderson/orange_calculator"
     )
 
     if platform not in ["windows", "linux"]:
@@ -255,6 +273,8 @@ def main():
     clean_output_dir(output_dir)
     build_executable(platform, script_path, output_dir, icon_path, compile_all)
     compact_output(output_dir, zip_path)
+
+    commit_and_push_changes(repo, tag, f"Build {tag} gerado com arquivos atualizados")
 
     upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
 
