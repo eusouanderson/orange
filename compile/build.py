@@ -218,6 +218,8 @@ def upload_to_github_release(file_path, tag, release_name, repo, platform):
 def commit_and_push_changes(repo, tag, commit_message="Atualização do build com src"):
     """Faz commit e push das alterações no repositório Git."""
     try:
+        subprocess.run(["git", "remote", "set-url", "origin", repo], check=True)
+        logger.info(f"Repositório remoto configurado para: {repo}")
 
         subprocess.run(["git", "add", "."], check=True)
 
