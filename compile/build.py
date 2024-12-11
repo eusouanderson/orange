@@ -269,14 +269,17 @@ def main():
         project_dir, "src", "assets", "images", "icons", "orange.ico"
     )
     zip_path = os.path.join(output_dir, f"Orange-{tag}.zip")
+    console_commit_input = input("Digite o commit  para o repositório: ")
+    console_repo_input = input("Digite o repositório para o repositório: ")
+    
 
     clean_output_dir(output_dir)
     build_executable(platform, script_path, output_dir, icon_path, compile_all)
     compact_output(output_dir, zip_path)
 
-    commit_and_push_changes(repo, tag, f"Build {tag} gerado com arquivos atualizados")
+    commit_and_push_changes(console_repo_input, tag, console_commit_input)
 
-    upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
+    upload_to_github_release(zip_path, tag, f"Orange {tag}", console_commit_input, platform)
 
 
 if __name__ == "__main__":
