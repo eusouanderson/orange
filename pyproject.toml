@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "orange"
-version = "0.1.111"
+version = "0.1.112"
 description = ""
 authors = [ "Anderson Rodrigues <eusouanderson@outlook.com>",]
 readme = "README.md"
@@ -17,6 +17,12 @@ pyinstaller = "^6.11.1"
 black = "^24.10.0"
 requests = "^2.32.3"
 beautifulsoup4 = "^4.12.3"
+requests-html = "^0.10.0"
+websockets = "8.1"
+
+[tool.poetry.dependencies.lxml]
+extras = [ "html-clean",]
+version = "^5.3.0"
 
 [tool.poetry.group.dev.dependencies]
 cython = "^3.0.11"
