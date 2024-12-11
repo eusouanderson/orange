@@ -24,7 +24,7 @@ class Calculator(QMainWindow):
         super().__init__()
         self.setWindowTitle("Orange")
         self.history = []
-        
+
         if env == "development":
 
             icon_path = path.join(
@@ -94,14 +94,13 @@ class Calculator(QMainWindow):
         self.create_button(":", 4, 4, "exchange")
         self.create_button("BRL:JPY", 4, 5, "exchange")
         self.create_button("BRL:BTC", 4, 6, "exchange")
-        
+
         self.main_layout.addLayout(self.button_layout)
 
         central_widget = QWidget()
         central_widget.setLayout(self.main_layout)
         self.setCentralWidget(central_widget)
 
-        
     def keyPressEvent(self, event: QKeyEvent):
         """
         Método para capturar a tecla pressionada no teclado e realizar a ação correspondente.
@@ -265,11 +264,12 @@ class Calculator(QMainWindow):
             self.show_help()
         elif text in exchange_pairs:
             from_currency, to_currency = exchange_pairs[text]
-            rate = get_exchange_rate(from_currency=from_currency, to_currency=to_currency)
+            rate = get_exchange_rate(
+                from_currency=from_currency, to_currency=to_currency
+            )
             formatted_rate = str(rate) if to_currency != "BTC" else str(rate)
             self.result_display.setText(self.result_display.text() + formatted_rate)
-        
-            
+
         else:
             new_text = current_text + text
             self.result_display.setText(new_text)
