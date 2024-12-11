@@ -276,7 +276,7 @@ def main():
         build_executable(platform, script_path, output_dir, icon_path, compile_all)
         compact_output(output_dir, zip_path)
 
-        commit_and_push_changes(repo, tag)
+        #commit_and_push_changes(repo, tag)
         upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
     except subprocess.CalledProcessError as e:
         logger.error("Erro ao executar subprocesso: %s", e.stderr.decode())

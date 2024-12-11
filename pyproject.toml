@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "orange"
-version = "0.1.112"
+version = "0.1.114"
 description = ""
 authors = [ "Anderson Rodrigues <eusouanderson@outlook.com>",]
 readme = "README.md"
@@ -19,6 +19,7 @@ requests = "^2.32.3"
 beautifulsoup4 = "^4.12.3"
 requests-html = "^0.10.0"
 websockets = "8.1"
+pyaudio = "^0.2.14"
 
 [tool.poetry.dependencies.lxml]
 extras = [ "html-clean",]
