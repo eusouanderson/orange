@@ -47,20 +47,14 @@ def prepare_pyx(source_file, pyx_file):
         raise
 
 
-import os
-import shutil
-import logging
-
-logger = logging.getLogger(__name__)
-
 def copy_src_files(src_dir, output_dir):
     """Função para copiar arquivos do diretório src para o diretório de saída, excluindo a pasta 'core'."""
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    
+
     for item in os.listdir(src_dir):
-        if item == "core":  
-            continue  
+        if item == "core":
+            continue
 
         s = os.path.join(src_dir, item)
         d = os.path.join(output_dir, item)
@@ -69,9 +63,10 @@ def copy_src_files(src_dir, output_dir):
             shutil.copytree(s, d, dirs_exist_ok=True)
         else:
             shutil.copy2(s, d)
-    
-    logger.info(f"Arquivos copiados de {src_dir} para {output_dir}, exceto a pasta 'core'")
 
+    logger.info(
+        f"Arquivos copiados de {src_dir} para {output_dir}, exceto a pasta 'core'"
+    )
 
 
 def compile_pyx_to_c(pyx_file, output_dir):
@@ -121,7 +116,7 @@ def build_executable(platform, script_path, output_dir, icon_path, compile_all=F
 
     src_dir = os.path.join(project_dir, "..", "src")
     logger.info(f"Diretório src: {src_dir}")
-    
+
     if compile_all:
         compile_all_src_files(src_dir, output_dir)
     else:
@@ -219,23 +214,23 @@ def upload_to_github_release(file_path, tag, release_name, repo, platform):
         logger.error("Erro ao enviar para o GitHub Release:", e)
         sys.exit(1)
 
+
 def commit_and_push_changes(repo, tag, commit_message="Atualização do build com src"):
     """Faz commit e push das alterações no repositório Git."""
     try:
-        
+
         subprocess.run(["git", "add", "."], check=True)
-        
-        
+
         subprocess.run(["git", "commit", "-m", commit_message], check=True)
-        
-        
+
         subprocess.run(["git", "push", "origin", "main"], check=True)
-        
-        logger.info("Alterações comprometidas e enviadas para o repositório com sucesso.")
+
+        logger.info(
+            "Alterações comprometidas e enviadas para o repositório com sucesso."
+        )
     except subprocess.CalledProcessError as e:
         logger.error("Erro ao fazer commit ou push no repositório Git:", e)
         sys.exit(1)
-
 
 
 def main():
@@ -279,14 +274,13 @@ def main():
         build_executable(platform, script_path, output_dir, icon_path, compile_all)
         compact_output(output_dir, zip_path)
 
-        #commit_and_push_changes(console_repo_input, tag, console_commit_input)
-        upload_to_github_release(
-            zip_path, tag, f"Orange {tag}", repo, platform
-        )
+        commit_and_push_changes(repo, tag)
+        upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
     except subprocess.CalledProcessError as e:
         logger.error("Erro ao executar subprocesso: %s", e.stderr.decode())
     except Exception as e:
         logger.error("Erro durante a execução: %s", str(e))
+
 
 if __name__ == "__main__":
     main()
