@@ -250,7 +250,7 @@ def main():
     repo = (
         sys.argv[3]
         if len(sys.argv) > 3 and not sys.argv[3].startswith("--")
-        else "eusouanderson/orange_calculator"
+        else "eusouanderson/orange"
     )
 
     if platform not in ["windows", "linux"]:
