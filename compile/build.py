@@ -218,7 +218,7 @@ def upload_to_github_release(file_path, tag, release_name, repo, platform):
 def commit_and_push_changes(repo, tag, commit_message="Atualização do build com src"):
     """Faz commit e push das alterações no repositório Git."""
     try:
-        #subprocess.run(["git", "remote", "set-url", "origin", repo], check=True)
+        # subprocess.run(["git", "remote", "set-url", "origin", repo], check=True)
         logger.info(f"Repositório remoto configurado para: {repo}")
 
         subprocess.run(["git", "add", "."], check=True)
@@ -266,17 +266,17 @@ def main():
     zip_path = os.path.join(output_dir, f"Orange-{tag}.zip")
 
     try:
-        #console_commit_input = input("Digite o commit para o repositório: ").strip()
-        #console_repo_input = input("Digite o repositório para o upload: ").strip()
+        # console_commit_input = input("Digite o commit para o repositório: ").strip()
+        # console_repo_input = input("Digite o repositório para o upload: ").strip()
 
-        '''if not console_commit_input or not console_repo_input:
-            raise ValueError("Commit ou repositório inválidos.")'''
+        """if not console_commit_input or not console_repo_input:
+        raise ValueError("Commit ou repositório inválidos.")"""
 
         clean_output_dir(output_dir)
         build_executable(platform, script_path, output_dir, icon_path, compile_all)
         compact_output(output_dir, zip_path)
 
-        #commit_and_push_changes(repo, tag)
+        # commit_and_push_changes(repo, tag)
         upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
     except subprocess.CalledProcessError as e:
         logger.error("Erro ao executar subprocesso: %s", e.stderr.decode())

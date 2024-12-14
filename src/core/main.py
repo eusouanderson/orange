@@ -1,32 +1,33 @@
 import sys
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QIcon
 from os import environ, path
-from PySide6.QtGui import QShortcut, QKeySequence
-
+import math
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon, QKeyEvent
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
     QVBoxLayout,
-    QHBoxLayout,
     QWidget,
     QPushButton,
-    QPlainTextEdit,
-    QFileDialog,
+    QLineEdit,
+    QGridLayout,
+    QDialog,
+    QTextEdit,
     QLabel,
-    QColorDialog,
-    QFontDialog,
-    QSlider,
-    
 )
+from exchange_rate import get_exchange_rate
 
 env = environ.get("ENV", "production")
 
-class CodeEditor(QMainWindow):
+
+class Calculator(QMainWindow):
     def __init__(self):
         super().__init__()
-        
+        self.setWindowTitle("Orange")
+        self.history = []
+
         if env == "development":
+
             icon_path = path.join(
                 path.dirname(__file__),
                 "..",
@@ -41,162 +42,406 @@ class CodeEditor(QMainWindow):
             )
 
         self.setWindowIcon(QIcon(icon_path))
-        self.setWindowTitle("Orange Editor")
-        self.setGeometry(100, 100, 800, 600)
+        self.setWindowTitle("Calculadora Orange")
+        self.setGeometry(300, 300, 400, 500)
+        self.setFixedSize(700, 400)
 
-        self.font = QFont("Consolas", 12)
-        self.setFont(self.font)
+        self.main_layout = QVBoxLayout()
 
-        self.init_ui()
+        self.is_result_displayed = False
+        self.result_display = QLineEdit(self)
+        self.result_display.setAlignment(Qt.AlignRight)
+        self.result_display.setReadOnly(False)
+        self.result_display.setStyleSheet("font-size: 24px; padding: 10px;")
+        self.main_layout.addWidget(self.result_display)
 
-    def init_ui(self):
-        """Inicializa os componentes da interface gráfica."""
-        self.setStyleSheet("background-color: #1E1E1E; color: #D4D4D4;")
-        self.create_shortcuts()
-        self.editor = QPlainTextEdit(self)
-        self.editor.setFont(self.font)
-        self.editor.setStyleSheet("background-color: #1E1E1E; color: #D4D4D4;")
-        self.editor.setTabStopDistance(4 * self.font.pointSizeF())
+        self.memory = {"result": ""}
+        self.memory_indicator = QLineEdit(self)
+        self.memory_indicator.setText("")
+        self.memory_indicator.setStyleSheet(
+            """
+            font-size: 12px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        """
+        )
+        self.memory_indicator.setGeometry(10, 10, 80, 30)
+        self.memory_indicator.hide()
+        self.main_layout.addWidget(self.memory_indicator)
 
-        self.line_number_area = QLabel(self)
-        self.line_number_area.setStyleSheet("background-color: #2E2E2E; color: #888888;")
-        self.line_number_area.setAlignment(Qt.AlignTop | Qt.AlignRight)
-        self.line_number_area.setFont(QFont("Consolas", 10))
+        self.button_layout = QGridLayout()
 
-        self.editor.blockCountChanged.connect(self.update_line_numbers)
-        self.editor.updateRequest.connect(self.update_line_area)
+        self.create_button("7", 0, 0)
+        self.create_button("8", 0, 1)
+        self.create_button("9", 0, 2)
+        self.create_button("/", 0, 3, "operator")
+        self.create_button("%", 0, 4, "operator")
+        self.create_button("sin", 0, 5, "trig")
+        self.create_button("USD:BRL", 0, 6, "exchange")
+        self.create_button("MR", 0, 7, "memory")
 
-        self.open_button = QPushButton("Abrir", self)
-        self.open_button.setStyleSheet("background-color: #333333; color: #FFFFFF;")
-        self.open_button.clicked.connect(self.open_file)
+        self.create_button("4", 1, 0)
+        self.create_button("5", 1, 1)
+        self.create_button("6", 1, 2)
+        self.create_button("*", 1, 3, "operator")
+        self.create_button("√", 1, 4, "operator")
+        self.create_button("cos", 1, 5, "trig")
+        self.create_button("EUR:BRL", 1, 6, "exchange")
+        self.create_button("M+", 1, 7, "memory")
 
-        self.new_button = QPushButton("Novo", self)
-        self.new_button.setStyleSheet("background-color: #333333; color: #FFFFFF;")
-        self.new_button.clicked.connect(self.new_file)
+        self.create_button("1", 2, 0)
+        self.create_button("2", 2, 1)
+        self.create_button("3", 2, 2)
+        self.create_button("-", 2, 3, "operator")
+        self.create_button("(", 2, 4, "parenthesis")
+        self.create_button("tan", 2, 5, "trig")
+        self.create_button("GBP:BRL", 2, 6, "exchange")
+        self.create_button("M-", 2, 7, "memory")
 
-        self.save_button = QPushButton("Salvar", self)
-        self.save_button.setStyleSheet("background-color: #333333; color: #FFFFFF;")
-        self.save_button.clicked.connect(self.save_file)
+        self.create_button("0", 3, 0)
+        self.create_button(".", 3, 1)
+        self.create_button("=", 3, 2, "operator")
+        self.create_button("+", 3, 3, "operator")
+        self.create_button(")", 3, 4, "parenthesis")
+        self.create_button("log", 3, 5, "trig")
+        self.create_button("JPY:BRL", 3, 6, "exchange")
 
-        self.format_button = QPushButton("Cor", self)
-        self.format_button.setStyleSheet("background-color: #333333; color: #FFFFFF;")
-        self.format_button.clicked.connect(self.open_format_dialog)
+        self.create_button("C", 4, 0, "clear")
+        self.create_button("←", 4, 1, "backspace")
+        self.create_button("Hist", 4, 2, "history")
+        self.create_button("Help", 4, 3, "help")
+        self.create_button("AUD:BRL", 4, 5, "exchange")
+        self.create_button("CAD:BRL", 4, 6, "exchange")
 
-        self.transparent_button = QPushButton("Alternar Transparência", self)
-        self.transparent_button.setStyleSheet("background-color: #333333; color: #FFFFFF;")
-        self.transparent_button.clicked.connect(self.toggle_transparency)
+        self.main_layout.addLayout(self.button_layout)
 
-        self.transparency_slider = QSlider(Qt.Horizontal, self)
-        self.transparency_slider.setMinimum(0)
-        self.transparency_slider.setMaximum(100)
-        self.transparency_slider.setValue(100) 
-        self.transparency_slider.setTickInterval(10)
-        self.transparency_slider.setTickPosition(QSlider.TicksBelow)
-        self.transparency_slider.valueChanged.connect(self.update_transparency)
-
-        buttons_layout = QHBoxLayout()
-        buttons_layout.addWidget(self.open_button)
-        buttons_layout.addWidget(self.save_button)
-        buttons_layout.addWidget(self.new_button)
-        buttons_layout.addWidget(self.format_button)
-        buttons_layout.addWidget(self.transparent_button) 
-
-        editor_layout = QHBoxLayout()
-        editor_layout.addWidget(self.line_number_area)
-        editor_layout.addWidget(self.editor)
-
-        transparency_layout = QVBoxLayout()
-        transparency_layout.addWidget(QLabel("Ajustar Transparência:"))
-        transparency_layout.addWidget(self.transparency_slider)
-
-        
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(buttons_layout)
-        main_layout.addLayout(editor_layout)
-        main_layout.addLayout(transparency_layout)
-
-        central_widget = QWidget(self)
-        central_widget.setLayout(main_layout)
+        central_widget = QWidget()
+        central_widget.setLayout(self.main_layout)
         self.setCentralWidget(central_widget)
 
-        self.update_line_numbers()
+    def handle_input(self, text):
+        """
+        Manipula a entrada de texto, seja do teclado ou de cliques no botão.
+        """
+        current_text = ""
+        if text.isdigit():
+            if self.is_result_displayed:
+                self.result_display.setText(text)
+                self.is_result_displayed = False
+            else:
+                current_text = self.result_display.text()
+                self.result_display.setText(current_text + text)
 
-        self.transparent = False
-    def create_shortcuts(self):
-        """Cria atalhos para os botões.""" 
-        self.open_shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
-        self.open_shortcut.activated.connect(self.open_file)
+        elif text in ["*", "/", "%", "+", "-"]:
+            if self.is_result_displayed:
+                current_text = self.result_display.text()
+                self.result_display.setText(current_text + text)
+                self.is_result_displayed = False
+            else:
+                current_text = self.result_display.text()
+                self.result_display.setText(current_text + text)
 
-        self.save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
-        self.save_shortcut.activated.connect(self.save_file)
+    def on_button_click(self):
+        button = self.sender()
+        text = button.text()
+        current_text = self.handle_input(text)
 
-        self.new_shortcut = QShortcut(QKeySequence("Ctrl+N"), self)
-        self.new_shortcut.activated.connect(self.new_file)
+        exchange_pairs = {
+            "USD:BRL": ("USD", "BRL"),
+            "EUR:BRL": ("EUR", "BRL"),
+            "GBP:BRL": ("GBP", "BRL"),
+            "JPY:BRL": ("JPY", "BRL"),
+            "AUD:BRL": ("AUD", "BRL"),
+            "CAD:BRL": ("CAD", "BRL"),
+            "BRL:USD": ("BRL", "USD"),
+            "BRL:EUR": ("BRL", "EUR"),
+            "EUR:USD": ("EUR", "USD"),
+            "USD:EUR": ("USD", "EUR"),
+            "BRL:GBP": ("BRL", "GBP"),
+            "GBP:BRL": ("GBP", "BRL"),
+            "BRL:JPY": ("BRL", "JPY"),
+            "JPY:BRL": ("JPY", "BRL"),
+            "USD:JPY": ("USD", "JPY"),
+            "JPY:USD": ("JPY", "USD"),
+            "BRL:BTC": ("BRL", "BTC"),
+            "BTC:BRL": ("BTC", "BRL"),
+        }
 
-        self.format_shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
-        self.format_shortcut.activated.connect(self.open_format_dialog)
+        if text == "=":
+            self.on_equal_click()
+        elif text == "C":
+            self.result_display.clear()
+        elif text == "←":
+            self.on_backspace()
+        elif text == "Hist":
+            self.show_history()
+        elif text == "Help":
+            self.show_help()
+        elif text == "(":
+            self.result_display.setText(self.result_display.text() + "(")
 
-        self.transparent_shortcut = QShortcut(QKeySequence("Ctrl+T"), self)
-        self.transparent_shortcut.activated.connect(self.toggle_transparency)
+        elif text == ")":
+            self.result_display.setText(self.result_display.text() + ")")
+        
+        elif text == "MR":
+            if "result" in self.memory and self.memory["result"]:
+                self.result_display.setText(str(self.memory["result"]))
+                self.update_memory_indicator("MR")
+                self.is_result_displayed = True
+                self.update_memory_indicator("M " + str(self.memory["result"]))
+        elif text == "M+":
+            self.memory["result"] = self.result_display.text()
+            self.update_memory_indicator("M " + str(self.memory["result"]))
 
+        elif text == "M-":
+            self.memory["result"] = ""
+            self.memory_indicator.hide()
 
-    def update_line_numbers(self):
-        """Atualiza os números de linha."""
-        lines = self.editor.blockCount()
-        text = "\n".join(str(i + 1) for i in range(lines))
-        self.line_number_area.setText(text)
+        elif text in exchange_pairs:
+            try:
+                result = self.result_display.text()
+                from_currency, to_currency = exchange_pairs[text]
+                rate = get_exchange_rate(
+                    from_currency=from_currency, to_currency=to_currency, amount=int(result),
+                )
+                formatted_rate = str(rate) if to_currency != "BTC" else str(rate)
+                self.result_display.setText(str(rate))
+            except Exception as e:
+                self.result_display.setText("Erro")
 
-    def update_line_area(self, rect, dy):
-        """Sincroniza os números de linha com o editor."""
-        if dy:
-            self.line_number_area.scroll(0, dy)
-        else:
-            self.line_number_area.update()
+        self.current_text = self.result_display.text()
 
-    def new_file(self):
-        """Cria um novo arquivo e limpa o editor.""" 
-        self.editor.setPlainText("")
+        operations = {
+            "log": math.log,
+            "sin": math.sin,
+            "cos": math.cos,
+            "tan": math.tan,
+            "√": math.sqrt,
+            "%": lambda x, y: x % y,
+        }
 
-    def open_file(self):
-        """Abre um arquivo e carrega o conteúdo no editor.""" 
-        file_path, _ = QFileDialog.getOpenFileName(self, "Abrir Arquivo", "", "Todos os Arquivos (*.*)")
-        if file_path:
-            with open(file_path, "r", encoding="utf-8") as file:
-                content = file.read()
-                self.editor.setPlainText(content)
+        if text in operations:
+            try:
 
-    def save_file(self):
-        """Salva o conteúdo do editor em um arquivo.""" 
-        file_path, _ = QFileDialog.getSaveFileName(self, "Salvar Arquivo", "", "Todos os Arquivos (*.*)")
-        if file_path:
-            with open(file_path, "w", encoding="utf-8") as file:
-                content = self.editor.toPlainText()
-                file.write(content)
+                number = float(self.result_display.text().strip())
+                if text == "log" and number <= 0:
+                    self.result_display.setText(
+                        "Erro  (Algoritimo indefinido para operadores negativo)"
+                    )
+                if text == "√" and number < 0:
+                    self.result_display.setText(
+                        "Erro  (Algoritimo indefinido para operadores negativo)"
+                    )
+                if text == "%":
+                    number = str(self.result_display.text().strip().split("%")[0])
+                    
+                if text in ["sin", "cos", "tan"]:
+                    number = math.radians(number)
+                result = operations[text](number)
+                self.result_display.setText(str(result))
 
-    def open_format_dialog(self):
-        """Abre um diálogo para personalizar o estilo do editor.""" 
-        color = QColorDialog.getColor()
-        if color.isValid():
-            self.editor.setStyleSheet(
-                f"background-color: #1E1E1E; color: {color.name()};"
+            except ValueError as e:
+                self.result_display.setText(f"Erro: {e}")
+            except Exception as e:
+                self.result_display.setText("Erro")
+
+        try:
+            self.result_display.setText(str(current_text + text))
+        except Exception as e:
+            pass
+
+    def keyPressEvent(self, event: QKeyEvent):
+        """
+        Método para capturar a tecla pressionada no teclado e realizar a ação correspondente.
+        """
+        key = event.key()
+
+        if Qt.Key_0 <= key <= Qt.Key_9:
+            self.handle_input(chr(key))
+
+        # Operadores matemáticos
+        elif key in [
+            Qt.Key_Plus,
+            Qt.Key_Minus,
+            Qt.Key_Asterisk,
+            Qt.Key_Slash,
+            Qt.Key_Percent,
+        ]:
+            operator_map = {
+                Qt.Key_Plus: "+",
+                Qt.Key_Minus: "-",
+                Qt.Key_Asterisk: "*",
+                Qt.Key_Slash: "/",
+                Qt.Key_Percent: "%",
+            }
+            self.handle_input(operator_map[key])
+
+        # Tecla ponto para decimais
+        elif key == Qt.Key_Period:
+            self.result_display.setText(self.result_display.text() + ".")
+
+        # Parênteses
+        elif key == Qt.Key_Left:
+            self.result_display.setText(self.result_display.text() + "(")
+        elif key == Qt.Key_Right:
+            self.result_display.setText(self.result_display.text() + ")")
+
+        # Funções matemáticas
+        elif key == Qt.Key_L:
+            self.result_display.setText(self.result_display.text() + "log")
+        elif key == Qt.Key_S:
+            self.result_display.setText(self.result_display.text() + "sin")
+        elif key == Qt.Key_C:
+            self.result_display.setText(self.result_display.text() + "cos")
+        elif key == Qt.Key_T:
+            self.result_display.setText(self.result_display.text() + "tan")
+
+        # Igual
+        elif key == Qt.Key_Equal or key == Qt.Key_Enter or key == Qt.Key_Return:
+            self.on_equal_click()
+
+        # Backspace para apagar o último caractere
+        elif key == Qt.Key_Backspace:
+            self.on_backspace()
+
+        # Delete para limpar todo o texto
+        elif key == Qt.Key_Delete:
+            self.result_display.clear()
+
+    def on_backspace(self):
+        current_text = self.result_display.text()
+        new_text = current_text[:-1]
+        self.result_display.setText(new_text)
+
+    def update_memory_indicator(self, action):
+        """
+        Atualiza o indicador de memória com base na ação realizada.
+        """
+        self.memory_indicator.setText(action)
+        self.memory_indicator.show()
+
+    def create_button(self, text, row, col, style=""):
+        button = QPushButton(text)
+        button.setStyleSheet("font-size: 15px; padding: 15px;")
+        button.clicked.connect(self.on_button_click)
+        if style == "history":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightgray;"
             )
 
-    def toggle_transparency(self):
-        """Alterna a transparência da janela.""" 
-        if self.transparent:
-            self.setWindowOpacity(1) 
-        else:
-            self.setWindowOpacity(0.5)  
-        
-        self.transparent = not self.transparent
+        if style == "exchange":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightgreen;"
+            )
 
-    def update_transparency(self):
-        """Atualiza a transparência conforme o valor do slider.""" 
-        opacity_value = self.transparency_slider.value() / 100  
-        self.setWindowOpacity(opacity_value)
+        if style == "memory":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightblue;"
+            )
+        if style == "operator":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightblue;"
+            )
+        elif style == "trig":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: violet;"
+            )
+        elif style == "parenthesis":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightyellow;"
+            )
+        elif style == "clear":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightcoral;"
+            )
+        elif style == "backspace":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: lightgray;"
+            )
+        elif style == "help":
+            button.setStyleSheet(
+                "font-size: 18px; padding: 15px; background-color: yellow;"
+            )
+
+        self.button_layout.addWidget(button, row, col)
+
+    def show_help(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Ajuda - Atalhos do Teclado")
+        dialog.setGeometry(100, 100, 400, 300)
+
+        help_text = QTextEdit(dialog)
+        help_text.setReadOnly(True)
+        help_text.setText(
+            """
+            Atalhos do Teclado:
+            1, 2, ..., 9, 0  -> Digitar números
+            +, -, *, /       -> Operadores
+            %                -> Módulo
+            .                -> Ponto decimal
+            Backspace        -> Apagar último caractere
+            Delete           -> Limpar tudo
+            Enter/Return     -> Calcular resultado
+            (                -> Abrir parêntese
+            )                -> Fechar parêntese
+            Pode usar o teclado para escrever expressões matemáticas.
+            e expressões trigonometricas Ex: sin(45), cos(45), tan(45)
+            """
+        )
+        layout = QVBoxLayout()
+        layout.addWidget(help_text)
+        dialog.setLayout(layout)
+        dialog.exec()
+
+    def show_history(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Histórico de Operações")
+        dialog.setGeometry(100, 100, 400, 300)
+
+        text_edit = QTextEdit(dialog)
+        text_edit.setReadOnly(True)
+        text_edit.setText("\n".join(self.history))
+        layout = QVBoxLayout()
+        layout.addWidget(text_edit)
+        dialog.setLayout(layout)
+
+        dialog.exec()
+
+    def on_equal_click(self):
+        try:
+            self.is_result_displayed = True
+            expression = self.result_display.text()
+
+            if (
+                "sin" in expression
+                or "cos" in expression
+                or "tan" in expression
+                or "sqrt" in expression
+            ):
+
+                expression = expression + ")"
+
+            elif "%" in expression:
+                expression = expression.replace(")", " ")
+
+            result = eval(expression)
+
+            print(f"Expressão: {expression}, Resultado: {result}")
+            if not self.memory.get("result"):
+                self.memory["result"] = result
+            self.history.append(f"{expression} = {result}")
+
+            self.result_display.setText(str(result))
+
+        except Exception as e:
+            self.result_display.setText("Erro")
+            print(f"Erro: {e}")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = CodeEditor()
+    window = Calculator()
     window.show()
     sys.exit(app.exec())

@@ -1,13 +1,17 @@
 [build-system]
-requires = [ "poetry-core",]
+requires = [ "poetry-core>=1.0.0",]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "orange"
-version = "0.1.120"
-description = ""
+name = "orange-micro-framework"
+version = "0.1.129"
+description = "Framework to compile Python projects with Cython and bundle executables using PyInstaller, including path corrections."
 authors = [ "Anderson Rodrigues <eusouanderson@outlook.com>",]
 readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/eusouanderson/orange-micro-framework"
+repository = "https://github.com/eusouanderson/orange-micro-framework"
+keywords = [ "cython", "pyinstaller", "python-packager", "compiler", "executable",]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.14"
@@ -20,6 +24,8 @@ beautifulsoup4 = "^4.12.3"
 requests-html = "^0.10.0"
 websockets = "8.1"
 pyaudio = "^0.2.14"
+pypdf2 = "^3.0.1"
+python-docx = "^1.1.2"
 
 [tool.poetry.dependencies.lxml]
 extras = [ "html-clean",]
