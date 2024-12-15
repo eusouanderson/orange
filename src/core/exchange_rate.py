@@ -18,7 +18,7 @@ def get_exchange_rate(from_currency, to_currency, amount):
     """
 
     try:
-        
+
         url = f"https://www.xe.com/currencyconverter/convert/?Amount={amount}&From={from_currency}&To={to_currency}"
 
         headers = {
@@ -42,7 +42,7 @@ def get_exchange_rate(from_currency, to_currency, amount):
 
         if rate_match:
             rate = float(rate_match.group())
-            converted_amount = rate  
+            converted_amount = rate
             return converted_amount
         else:
             logger.error("Não foi possível extrair os números do texto.")
@@ -54,9 +54,9 @@ def get_exchange_rate(from_currency, to_currency, amount):
 
 
 if __name__ == "__main__":
-    from_currency = "USD" 
-    to_currency = "BRL"  
-    amount = 0.30  
+    from_currency = "USD"
+    to_currency = "BRL"
+    amount = 0.30
     converted_value = get_exchange_rate(from_currency, to_currency, amount)
 
     if converted_value:

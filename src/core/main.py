@@ -1,8 +1,8 @@
 import sys
 from os import environ, path
 import math
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QKeyEvent
+from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve
+from PySide6.QtGui import QIcon, QKeyEvent, QFont
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -14,6 +14,9 @@ from PySide6.QtWidgets import (
     QDialog,
     QTextEdit,
     QLabel,
+    QToolTip,
+    QHBoxLayout,
+    QFileDialog,
 )
 from exchange_rate import get_exchange_rate
 
@@ -25,6 +28,8 @@ class Calculator(QMainWindow):
         super().__init__()
         self.setWindowTitle("Orange")
         self.history = []
+        self.is_dark_mode = False
+        
 
         if env == "development":
 
@@ -77,7 +82,7 @@ class Calculator(QMainWindow):
         self.create_button("8", 0, 1)
         self.create_button("9", 0, 2)
         self.create_button("/", 0, 3, "operator")
-        self.create_button("%", 0, 4, "operator")
+        self.create_button("%", 0, 4, "operator_2")
         self.create_button("sin", 0, 5, "trig")
         self.create_button("USD:BRL", 0, 6, "exchange")
         self.create_button("MR", 0, 7, "memory")
@@ -86,7 +91,7 @@ class Calculator(QMainWindow):
         self.create_button("5", 1, 1)
         self.create_button("6", 1, 2)
         self.create_button("*", 1, 3, "operator")
-        self.create_button("√", 1, 4, "operator")
+        self.create_button("√", 1, 4, "operator_2")
         self.create_button("cos", 1, 5, "trig")
         self.create_button("EUR:BRL", 1, 6, "exchange")
         self.create_button("M+", 1, 7, "memory")
@@ -114,6 +119,20 @@ class Calculator(QMainWindow):
         self.create_button("Help", 4, 3, "help")
         self.create_button("AUD:BRL", 4, 5, "exchange")
         self.create_button("CAD:BRL", 4, 6, "exchange")
+
+        self.theme_button = QPushButton("🌚", self)
+        self.theme_button.clicked.connect(self.toggle_theme)
+        self.theme_button.setFixedHeight(20)
+        self.theme_button.setFixedWidth(20)
+        self.theme_button.setStyleSheet(
+            """
+            font-size: 12px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        """
+        )
+        self.main_layout.addWidget(self.theme_button)
 
         self.main_layout.addLayout(self.button_layout)
 
@@ -184,7 +203,7 @@ class Calculator(QMainWindow):
 
         elif text == ")":
             self.result_display.setText(self.result_display.text() + ")")
-        
+
         elif text == "MR":
             if "result" in self.memory and self.memory["result"]:
                 self.result_display.setText(str(self.memory["result"]))
@@ -199,12 +218,24 @@ class Calculator(QMainWindow):
             self.memory["result"] = ""
             self.memory_indicator.hide()
 
+        elif text == "%":
+
+            text = self.result_display.text().strip().replace("%", "")
+            try:
+                number = float(text)
+                result = number / 100
+                self.result_display.setText(str(result))
+            except ValueError:
+                self.result_display.setText("Erro")
+
         elif text in exchange_pairs:
             try:
                 result = self.result_display.text()
                 from_currency, to_currency = exchange_pairs[text]
                 rate = get_exchange_rate(
-                    from_currency=from_currency, to_currency=to_currency, amount=int(result),
+                    from_currency=from_currency,
+                    to_currency=to_currency,
+                    amount=int(result),
                 )
                 formatted_rate = str(rate) if to_currency != "BTC" else str(rate)
                 self.result_display.setText(str(rate))
@@ -219,7 +250,6 @@ class Calculator(QMainWindow):
             "cos": math.cos,
             "tan": math.tan,
             "√": math.sqrt,
-            "%": lambda x, y: x % y,
         }
 
         if text in operations:
@@ -234,9 +264,7 @@ class Calculator(QMainWindow):
                     self.result_display.setText(
                         "Erro  (Algoritimo indefinido para operadores negativo)"
                     )
-                if text == "%":
-                    number = str(self.result_display.text().strip().split("%")[0])
-                    
+
                 if text in ["sin", "cos", "tan"]:
                     number = math.radians(number)
                 result = operations[text](number)
@@ -261,7 +289,6 @@ class Calculator(QMainWindow):
         if Qt.Key_0 <= key <= Qt.Key_9:
             self.handle_input(chr(key))
 
-        # Operadores matemáticos
         elif key in [
             Qt.Key_Plus,
             Qt.Key_Minus,
@@ -278,37 +305,37 @@ class Calculator(QMainWindow):
             }
             self.handle_input(operator_map[key])
 
-        # Tecla ponto para decimais
-        elif key == Qt.Key_Period:
-            self.result_display.setText(self.result_display.text() + ".")
+        key_mappings = {
+            Qt.Key_Period: lambda: self.result_display.setText(
+                self.result_display.text() + "."
+            ),
+            Qt.Key_Left: lambda: self.result_display.setText(
+                self.result_display.text() + "("
+            ),
+            Qt.Key_Right: lambda: self.result_display.setText(
+                self.result_display.text() + ")"
+            ),
+            Qt.Key_L: lambda: self.result_display.setText(
+                self.result_display.text() + "log"
+            ),
+            Qt.Key_S: lambda: self.result_display.setText(
+                self.result_display.text() + "sin"
+            ),
+            Qt.Key_C: lambda: self.result_display.setText(
+                self.result_display.text() + "cos"
+            ),
+            Qt.Key_T: lambda: self.result_display.setText(
+                self.result_display.text() + "tan"
+            ),
+            Qt.Key_Equal: self.on_equal_click,
+            Qt.Key_Enter: self.on_equal_click,
+            Qt.Key_Return: self.on_equal_click,
+            Qt.Key_Backspace: self.on_backspace,
+            Qt.Key_Delete: self.result_display.clear,
+        }
 
-        # Parênteses
-        elif key == Qt.Key_Left:
-            self.result_display.setText(self.result_display.text() + "(")
-        elif key == Qt.Key_Right:
-            self.result_display.setText(self.result_display.text() + ")")
-
-        # Funções matemáticas
-        elif key == Qt.Key_L:
-            self.result_display.setText(self.result_display.text() + "log")
-        elif key == Qt.Key_S:
-            self.result_display.setText(self.result_display.text() + "sin")
-        elif key == Qt.Key_C:
-            self.result_display.setText(self.result_display.text() + "cos")
-        elif key == Qt.Key_T:
-            self.result_display.setText(self.result_display.text() + "tan")
-
-        # Igual
-        elif key == Qt.Key_Equal or key == Qt.Key_Enter or key == Qt.Key_Return:
-            self.on_equal_click()
-
-        # Backspace para apagar o último caractere
-        elif key == Qt.Key_Backspace:
-            self.on_backspace()
-
-        # Delete para limpar todo o texto
-        elif key == Qt.Key_Delete:
-            self.result_display.clear()
+        if key in key_mappings:
+            key_mappings[key]()
 
     def on_backspace(self):
         current_text = self.result_display.text()
@@ -322,92 +349,261 @@ class Calculator(QMainWindow):
         self.memory_indicator.setText(action)
         self.memory_indicator.show()
 
+    def toggle_theme(self):
+        self.is_dark_mode = not self.is_dark_mode
+        self.apply_theme()
+
+    def apply_theme(self):
+        """Aplica o tema apropriado."""
+        if self.is_dark_mode:
+            self.setStyleSheet(
+                """
+                QMainWindow {
+                background-color: #1f1f1f; /* Azul escuro ou cinza com um toque mais sofisticado */
+                color: white;
+                }
+
+                QLineEdit {
+                    background-color: #2a2a2a; /* Tom de cinza mais escuro */
+                    color: #00ff00;  /* Verde neon */
+                    border: 2px solid #444; /* Borda mais grossa para destacar o input */
+                    border-radius: 5px; /* Bordas arredondadas */
+                    padding: 5px; /* Adicionando padding para melhorar a legibilidade */
+                }
+
+                QLineEdit:focus {
+                    border: 2px solid #00ff00; /* Foco no campo com borda verde neon */
+                    background-color: #3a3a3a; /* Escurece um pouco mais ao focar */
+                }
+
+                QPushButton {
+                    background-color: #333; /* Cinza escuro para botões */
+                    color: white;
+                    border: 1px solid #555;
+                    border-radius: 5px; /* Bordas arredondadas */
+                    padding: 10px 20px; /* Botões com um bom tamanho */
+                    
+                }
+
+                QPushButton:hover {
+                    background-color: #555; /* Cor de fundo mais clara ao passar o mouse */
+                    border-color: #00ff00; /* Borda verde no hover para um toque mais tecnológico */
+                }
+
+                QPushButton:pressed {
+                    background-color: #444; /* Quando pressionado, fica um pouco mais escuro */
+                }
+            """
+            )
+            self.theme_button.setText("☀️")
+        else:
+            self.setStyleSheet(
+                """
+                QMainWindow {
+                    background-color: #f0f0f0; /* Cor de fundo mais clara */
+                    color: black;
+                }
+
+                QLineEdit {
+                    background-color: #ffffff; /* Branco para campos de texto */
+                    color: #333; /* Texto em cinza escuro para contraste */
+                    border: 2px solid #ccc; /* Borda mais grossa para destacar o input */
+                    border-radius: 5px;
+                    padding: 5px;
+                }
+
+                QLineEdit:focus {
+                    border: 2px solid #0077ff; /* Borda azul ao focar */
+                    background-color: #e6f0ff; /* Fundo levemente azul claro ao focar */
+                }
+
+                QPushButton {
+                    background-color: #e0e0e0;
+                    color: black;
+                    border: 1px solid #bbb;
+                    border-radius: 5px;
+                    padding: 10px 20px;
+                    
+                }
+
+                QPushButton:hover {
+                    background-color: #d0d0d0;
+                    border-color: #0077ff; /* Azul no hover */
+                }
+
+                QPushButton:pressed {
+                    background-color: #c0c0c0; /* Quando pressionado, fica mais escuro */
+                }
+
+            """
+            )
+            self.theme_button.setText("🌚")
+
     def create_button(self, text, row, col, style=""):
         button = QPushButton(text)
-        button.setStyleSheet("font-size: 15px; padding: 15px;")
-        button.clicked.connect(self.on_button_click)
+
+        # Estilos centralizados
+        styles = {
+            "history": "font-size: 18px; padding: 15px; background-color: #1E1E1E; color: #A0A0A0;",
+            "exchange": "font-size: 18px; padding: 15px; background-color: #00BFAE; color: #000000;",
+            "memory": "font-size: 18px; padding: 15px; background-color: #4C6A92; color: #000000;",
+            "operator": "font-size: 18px; padding: 15px; background-color: #6A5ACD; color: #000000;",
+            "operator_2": "font-size: 18px; padding: 15px; background-color: #9B59B6; color: #000000;",
+            "trig": "font-size: 18px; padding: 15px; background-color: #8E44AD; color: #000000;",
+            "parenthesis": "font-size: 18px; padding: 15px; background-color: #34495E; color: #000000;",
+            "clear": "font-size: 18px; padding: 15px; background-color: #E74C3C; color: #000000;",
+            "backspace": "font-size: 18px; padding: 15px; background-color: #2C3E50; color: #000000;",
+            "help": "font-size: 18px; padding: 15px; background-color: #F39C12; color: #000000;",
+        }
+
+        default_style = "font-size: 15px; padding: 10px 15px; background-color: #FFFFFF; color: #000000;"; 
+
+
+        # Aplicar estilo
+        button.setStyleSheet(styles.get(style, default_style))
+
+        # Adicionar ToolTip com exemplos
+        QToolTip.setFont(QFont("SansSerif", 10))
+
+        # Exemplo de Tooltip de acordo com o tipo de botão
         if style == "history":
-            button.setStyleSheet(
-                "font-size: 18px; padding: 15px; background-color: lightgray;"
-            )
-
-        if style == "exchange":
-            button.setStyleSheet(
-                "font-size: 18px; padding: 15px; background-color: lightgreen;"
-            )
-
-        if style == "memory":
-            button.setStyleSheet(
-                "font-size: 18px; padding: 15px; background-color: lightblue;"
-            )
-        if style == "operator":
-            button.setStyleSheet(
-                "font-size: 18px; padding: 15px; background-color: lightblue;"
-            )
+            button.setToolTip(f"Exibe o histórico das operações.")
+        elif style == "exchange":
+            button.setToolTip(f"Converte o valor atual de uma moeda para outra.")
+        elif style == "memory":
+            button.setToolTip(f"Armazena o valor atual na memória.")
+        elif style == "operator":
+            button.setToolTip(f"Realiza operações (exemplo: 5 + 3 = 8).")
         elif style == "trig":
-            button.setStyleSheet(
-                "font-size: 18px; padding: 15px; background-color: violet;"
-            )
+            button.setToolTip(f"Calcula funções trigonométricas (exemplo:  30 sin).")
         elif style == "parenthesis":
-            button.setStyleSheet(
-                "font-size: 18px; padding: 15px; background-color: lightyellow;"
-            )
+            button.setToolTip(f"Utilize parênteses para agrupar operações (exemplo: (3 + 5) * 2).")
         elif style == "clear":
-            button.setStyleSheet(
-                "font-size: 18px; padding: 15px; background-color: lightcoral;"
-            )
+            button.setToolTip(f"Limpa a tela da calculadora.")
         elif style == "backspace":
-            button.setStyleSheet(
-                "font-size: 18px; padding: 15px; background-color: lightgray;"
-            )
+            button.setToolTip(f"Remove o último caractere inserido.")
         elif style == "help":
-            button.setStyleSheet(
-                "font-size: 18px; padding: 15px; background-color: yellow;"
-            )
+            button.setToolTip(f"Mostra informações sobre a calculadora.")
+        else:
+            button.setToolTip(f"Botão: {text}")  # Para botões sem estilo específico
 
+        # Conectar animação ao clique
+        button.clicked.connect(lambda: self.animate_button(button))
+        button.clicked.connect(self.on_button_click)
+
+        # Adicionar ao layout
         self.button_layout.addWidget(button, row, col)
 
-    def show_help(self):
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Ajuda - Atalhos do Teclado")
-        dialog.setGeometry(100, 100, 400, 300)
+    def animate_button(self, button):
+        animation = QPropertyAnimation(button, b"geometry")
+        animation.setDuration(200)
+        animation.setEasingCurve(QEasingCurve.OutBounce)
+        animation.setStartValue(button.geometry())
+        animation.setEndValue(button.geometry().adjusted(-5, -5, 5, 5))
+        animation.start()
 
+    def show_help(self):
+        # Criando a janela de ajuda
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Ajuda - Calculadora")
+        dialog.setGeometry(100, 100, 500, 400)
+
+        # Título principal
+        title = QLabel("Guia de Uso - Calculadora")
+        title.setAlignment(Qt.AlignCenter)
+        title.setFont(QFont("Arial", 16, QFont.Bold))
+
+        # Texto informativo
         help_text = QTextEdit(dialog)
         help_text.setReadOnly(True)
         help_text.setText(
             """
-            Atalhos do Teclado:
-            1, 2, ..., 9, 0  -> Digitar números
-            +, -, *, /       -> Operadores
-            %                -> Módulo
-            .                -> Ponto decimal
-            Backspace        -> Apagar último caractere
-            Delete           -> Limpar tudo
-            Enter/Return     -> Calcular resultado
-            (                -> Abrir parêntese
-            )                -> Fechar parêntese
-            Pode usar o teclado para escrever expressões matemáticas.
-            e expressões trigonometricas Ex: sin(45), cos(45), tan(45)
+            <h3>Atalhos do Teclado</h3>
+            <ul>
+                <li><b>1, 2, ..., 9, 0</b> -> Digitar números</li>
+                <li><b>+, -, *, /</b> -> Operadores</li>
+                <li><b>%</b> -> Calcula porcentagem com base no último número</li>
+                <li><b>.</b> -> Adicionar ponto decimal</li>
+                <li><b>Backspace</b> -> Apagar o último caractere</li>
+                <li><b>Delete</b> -> Limpar tudo</li>
+                <li><b>Enter/Return</b> -> Calcular resultado</li>
+                <li><b>(, )</b> -> Parênteses para expressões</li>
+            </ul>
+            <h3>Recursos Extras</h3>
+            <ul>
+                <li>Suporte a expressões trigonométricas: <code>sin, cos, tan</code></li>
+                <li>Suporte a <b>logaritmos</b>: <code>log</code></li>
+                <li>Cálculos combinados com porcentagem: <code>200 × 10% "Ainda não funcionando" </code></li>
+                <li>Conversão de moedas: <code>USD:BRL</code>, <code>EUR:BRL</code>, <code>GBP:BRL</code>, <code>JPY:BRL</code>, <code>AUD:BRL</code>, <code>CAD:BRL</code></li>
+            </ul>
+            <p>Use o teclado para escrever expressões matemáticas diretamente e pressione <b>Enter</b> para calcular.</p>
             """
         )
+        help_text.setFont(QFont("Arial", 12))
+
+        # Adicionar botão para fechar
+        button_layout = QHBoxLayout()
+        close_button = QPushButton("Fechar")
+        close_button.setStyleSheet(
+            "padding: 10px; background-color: #87CEEB; border-radius: 5px; font-size: 14px;"
+        )
+        close_button.clicked.connect(dialog.close)
+
+        # Botão adicional para abrir um link de documentação online
+        doc_button = QPushButton("Documentação Online")
+        doc_button.setStyleSheet(
+            "padding: 10px; background-color: #FFD700; border-radius: 5px; font-size: 14px;"
+        )
+        doc_button.clicked.connect(lambda: self.open_documentation())
+
+        button_layout.addWidget(doc_button)
+        button_layout.addStretch()
+        button_layout.addWidget(close_button)
+
+        # Layout principal
         layout = QVBoxLayout()
+        layout.addWidget(title)
         layout.addWidget(help_text)
+        layout.addLayout(button_layout)
+
         dialog.setLayout(layout)
         dialog.exec()
+
+    def open_documentation(self):
+        import webbrowser
+
+        webbrowser.open("https://github.com/eusouanderson/orange_calculator")
 
     def show_history(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Histórico de Operações")
         dialog.setGeometry(100, 100, 400, 300)
 
+        # Criação do QTextEdit para exibir e editar o histórico
         text_edit = QTextEdit(dialog)
-        text_edit.setReadOnly(True)
-        text_edit.setText("\n".join(self.history))
+        text_edit.setText("\n".join(self.history))  # Preencher o campo com o histórico
+
+        # Botão para salvar o histórico como um arquivo TXT
+        save_button = QPushButton("Salvar como TXT", dialog)
+        save_button.clicked.connect(lambda: self.save_to_txt(text_edit.toPlainText()))  # Conectar à função de salvar
+
+        # Layout para colocar o texto editável e o botão
         layout = QVBoxLayout()
         layout.addWidget(text_edit)
+        layout.addWidget(save_button)
         dialog.setLayout(layout)
 
         dialog.exec()
+
+    def save_to_txt(self, text):
+        
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(self, "Salvar Histórico", "", "Text Files (*.txt);;All Files (*)", options=options)
+
+        if file_path:
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(text)
+            
 
     def on_equal_click(self):
         try:

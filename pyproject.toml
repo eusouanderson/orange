@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "orange-micro-framework"
-version = "0.1.129"
+version = "0.1.130"
 description = "Framework to compile Python projects with Cython and bundle executables using PyInstaller, including path corrections."
 authors = [ "Anderson Rodrigues <eusouanderson@outlook.com>",]
 readme = "README.md"
