@@ -6,7 +6,7 @@ OS=$(uname -s)
 # Configurações específicas para Linux
 if [ "$OS" == "Linux" ]; then
     echo "Detectado: Linux"
-    export PYTHONPATH=$PYTHONPATH:/home/anderson/projects/orange/src
+    export PYTHONPATH=$PYTHONPATH:/home/anderson/orange/src  # Corrigir o caminho
     export QT_QPA_PLATFORM=xcb
     echo "Variáveis de ambiente configuradas para Linux."
 fi
@@ -32,6 +32,20 @@ if [[ "$OS" == "MINGW"* || "$OS" == "CYGWIN"* || "$OS" == "Darwin" ]]; then
     echo "Variáveis de ambiente configuradas para Windows."
 fi
 
-# Executar o aplicativo com Poetry
-echo "Executando o aplicativo..."
-poetry run python src/core/main.py
+# Corrigir caminho do script para execução em ambas plataformas
+if [ "$OS" == "Linux" ]; then
+    # No Linux, o script deve procurar no caminho correto
+    APP_PATH="/home/anderson/orange/src/core/main.py"
+elif [[ "$OS" == "MINGW"* || "$OS" == "CYGWIN"* || "$OS" == "Darwin" ]]; then
+    # No Windows, o script deve procurar no caminho correto
+    APP_PATH="C:\\Users\\Anderson\\Documents\\orange\\src\\core\\main.py"
+fi
+
+# Verificar se o arquivo main.py existe antes de executar
+if [ -f "$APP_PATH" ]; then
+    echo "Executando o aplicativo..."
+    poetry run python "$APP_PATH"
+else
+    echo "Erro: O arquivo main.py não foi encontrado no caminho especificado: $APP_PATH"
+    exit 1
+fi

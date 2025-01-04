@@ -39,7 +39,8 @@ Used to investigate your operating system by reading all active processes on you
 ## Usage
 1. Clone o repositório.
 2. Configure as dependências listadas no arquivo requirements.txt ou instale usando o Poetry.
-3. Use os scripts disponíveis para rodar ou buildar o projeto.
+3. Na pasta scripts na raiz do projeto tem um script de instalação ```"install.sh"```.
+4. Após a instalação concluida, navegue para o diretório raiz e execute o script ```"start.sh"```
 
 ## Get Started
 1. Clone o repositório:
