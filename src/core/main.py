@@ -1,8 +1,8 @@
+
 import sys
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QIcon
 from os import environ, path
-from PySide6.QtGui import QShortcut, QKeySequence, QTextCursor
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QShortcut, QKeySequence, QTextCursor, QFontDatabase, QFont, QIcon
 from PyPDF2 import PdfReader
 from docx import Document
 import os
@@ -42,14 +42,16 @@ class CodeEditor(QMainWindow):
             )
         else:
             icon_path = path.join(
-                path.dirname(__file__), "assets", "images", "icons", "orange.ico"
+                path.dirname(__file__),"..", "assets", "images", "icons", "orange.ico"
             )
+            font_path = path.join(path.dirname(__file__),"..", "assets", "font", "JetBrainsMono.ttf")
+            font_id = QFontDatabase.addApplicationFont(font_path)
+            font_family = QFontDatabase.applicationFontFamilies(font_id)
 
         self.setWindowIcon(QIcon(icon_path))
         self.setWindowTitle("Orange Editor")
         self.setGeometry(100, 100, 800, 600)
-
-        self.font = QFont("Consolas", 10)
+        self.font = QFont(font_family, 10)
         self.setFont(self.font)
 
         self.init_ui()
