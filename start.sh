@@ -38,7 +38,7 @@ if [ "$OS" == "Linux" ]; then
     APP_PATH="/home/anderson/orange/src/core/main.py"
 elif [[ "$OS" == "MINGW"* || "$OS" == "CYGWIN"* || "$OS" == "Darwin" ]]; then
     # No Windows, o script deve procurar no caminho correto
-    APP_PATH="C:\\Users\\Anderson\\Documents\\orange\\src\\core\\main.py"
+    APP_PATH="C:\\Users\\Anderson\\Documents\\projects\\orange\\src\\core\\main.py"
 fi
 
 # Verificar se o arquivo main.py existe antes de executar
