@@ -1,6 +1,5 @@
 # Makefile para configurar e rodar a aplicação
 
-# Detectar o sistema operacional
 OS := $(shell uname -s)
 
 # Caminho do projeto

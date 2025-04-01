@@ -6,7 +6,7 @@ OS=$(uname -s)
 # Configurações específicas para Linux
 if [ "$OS" == "Linux" ]; then
     echo "Detectado: Linux"
-    export PYTHONPATH=$PYTHONPATH:/home/anderson/orange/src  # Corrigir o caminho
+    export PYTHONPATH=$PYTHONPATH:/home/anderson/orange/src
     export QT_QPA_PLATFORM=xcb
     echo "Variáveis de ambiente configuradas para Linux."
 fi
@@ -14,16 +14,16 @@ fi
 # Configurações específicas para Windows
 if [[ "$OS" == "MINGW"* || "$OS" == "CYGWIN"* || "$OS" == "Darwin" ]]; then
     echo "Detectado: Windows"
-    
+
     # Definir o caminho absoluto do projeto no Windows, corrigindo para barras invertidas
     PROJECT_PATH="C:\\Users\\Anderson\\Documents\\orange\\src"
-    
+
     # Adicionar o caminho do projeto ao PYTHONPATH (sem o : inicial)
     export PYTHONPATH=$PROJECT_PATH
-    
-    # Definir o ambiente de desenvolvimento    
+
+    # Definir o ambiente de desenvolvimento
     export ENV=development
-    
+
     # Definir o ambiente de desenvolvimento
     export DEV_ENV=true
     # Exibir PYTHONPATH para garantir que o caminho foi configurado corretamente
@@ -38,7 +38,7 @@ if [ "$OS" == "Linux" ]; then
     APP_PATH="/home/anderson/orange/src/core/main.py"
 elif [[ "$OS" == "MINGW"* || "$OS" == "CYGWIN"* || "$OS" == "Darwin" ]]; then
     # No Windows, o script deve procurar no caminho correto
-    APP_PATH="C:\\Users\\Anderson\\Documents\\projects\\orange\\src\\core\\main.py"
+    APP_PATH="C:\\Users\\Anderson\\Documents\\orange\\src\\core\\main.py"
 fi
 
 # Verificar se o arquivo main.py existe antes de executar
