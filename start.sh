@@ -3,49 +3,71 @@
 # Detectar o sistema operacional
 OS=$(uname -s)
 
+# Obter o diretório absoluto do script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_PATH="$SCRIPT_DIR/src"
+APP_PATH="$PROJECT_PATH/core/main.py"
+
+# Configuração comum
+export PYTHONPATH="$PYTHONPATH:$PROJECT_PATH"
+
 # Configurações específicas para Linux
 if [ "$OS" == "Linux" ]; then
     echo "Detectado: Linux"
-    export PYTHONPATH=$PYTHONPATH:/home/anderson/orange/src
     export QT_QPA_PLATFORM=xcb
+    echo "PYTHONPATH configurado para: $PYTHONPATH"
     echo "Variáveis de ambiente configuradas para Linux."
 fi
 
 # Configurações específicas para Windows
-if [[ "$OS" == "MINGW"* || "$OS" == "CYGWIN"* || "$OS" == "Darwin" ]]; then
+if [[ "$OS" == MINGW* || "$OS" == CYGWIN* || "$OS" == "Darwin" ]]; then
     echo "Detectado: Windows"
-
-    # Definir o caminho absoluto do projeto no Windows, corrigindo para barras invertidas
-    PROJECT_PATH="C:\\Users\\Anderson\\Documents\\orange\\src"
-
-    # Adicionar o caminho do projeto ao PYTHONPATH (sem o : inicial)
-    export PYTHONPATH=$PROJECT_PATH
-
-    # Definir o ambiente de desenvolvimento
     export ENV=development
-
-    # Definir o ambiente de desenvolvimento
     export DEV_ENV=true
-    # Exibir PYTHONPATH para garantir que o caminho foi configurado corretamente
     echo "PYTHONPATH configurado para: $PYTHONPATH"
-
     echo "Variáveis de ambiente configuradas para Windows."
 fi
 
-# Corrigir caminho do script para execução em ambas plataformas
-if [ "$OS" == "Linux" ]; then
-    # No Linux, o script deve procurar no caminho correto
-    APP_PATH="/home/anderson/orange/src/core/main.py"
-elif [[ "$OS" == "MINGW"* || "$OS" == "CYGWIN"* || "$OS" == "Darwin" ]]; then
-    # No Windows, o script deve procurar no caminho correto
-    APP_PATH="C:\\Users\\Anderson\\Documents\\orange\\src\\core\\main.py"
-fi
-
-# Verificar se o arquivo main.py existe antes de executar
-if [ -f "$APP_PATH" ]; then
+# Função para executar o app
+executar_app() {
     echo "Executando o aplicativo..."
     poetry run python "$APP_PATH"
-else
+    return $?
+}
+
+# Verificar se o arquivo main.py existe antes de executar
+if [ ! -f "$APP_PATH" ]; then
     echo "Erro: O arquivo main.py não foi encontrado no caminho especificado: $APP_PATH"
     exit 1
+fi
+
+# Primeira tentativa de execução
+executar_app
+STATUS=$?
+
+# Se falhou e estamos no Linux, tentar instalar dependência e executar novamente
+if [ "$STATUS" -ne 0 ] && [ "$OS" == "Linux" ]; then
+    echo "A execução falhou. Verificando dependência 'libxcb-cursor0'..."
+
+    if ! dpkg -s libxcb-cursor0 >/dev/null 2>&1; then
+        echo "Tentando instalar libxcb-cursor0..."
+        if command -v sudo >/dev/null 2>&1; then
+            sudo apt update && sudo apt install -y libxcb-cursor0
+        else
+            echo "Erro: 'sudo' não disponível. Instale manualmente o pacote: libxcb-cursor0"
+            exit 1
+        fi
+    else
+        echo "'libxcb-cursor0' já está instalado. Pode haver outro problema com o Qt."
+    fi
+
+    echo "Tentando executar novamente..."
+    executar_app
+    STATUS=$?
+fi
+
+# Verifica se a execução ainda falha
+if [ "$STATUS" -ne 0 ]; then
+    echo "Erro: A aplicação falhou mesmo após tentativa de correção."
+    exit $STATUS
 fi

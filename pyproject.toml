@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "orange-micro-framework"
-version = "0.1.143"
+version = "0.1.145"
 description = "Framework to compile Python projects with Cython and bundle executables using PyInstaller, including path corrections."
 authors = [ "Anderson Rodrigues <eusouanderson@outlook.com>",]
 readme = "README.md"
@@ -14,7 +14,7 @@ repository = "https://github.com/eusouanderson/orange-micro-framework"
 keywords = [ "cython", "pyinstaller", "python-packager", "compiler", "executable",]
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.14"
+python = ">=3.10,<3.14"
 pyside6 = "^6.8.0.2"
 watchdog = "^6.0.0"
 pyinstaller = "^6.11.1"
