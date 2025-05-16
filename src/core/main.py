@@ -9,7 +9,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QIcon, QFont, QFontDatabase, QPixmap
 from PySide6.QtCore import Qt
-
+import imageio.v3 as iio
+from PySide6.QtGui import QImage
 
 class VehicleFilesViewer(QMainWindow):
     def __init__(self):
@@ -83,7 +84,9 @@ class VehicleFilesViewer(QMainWindow):
             return
 
         # Caminho absoluto para a raiz da pasta 'data'
-        data_base_path = os.path.abspath(os.path.join(base_path, "../../../"))
+        data_base_path = os.path.abspath(os.path.join(base_path, "..", "..", ".."))
+
+
 
         self.output.clear()
 
@@ -106,7 +109,12 @@ class VehicleFilesViewer(QMainWindow):
                         tree = ET.parse(full_path)
                         root_xml = tree.getroot()
 
-                        files_tag = root_xml.find("Files")
+                        files_tags = root_xml.findall(".//Files")
+                        for files_tag in files_tags:
+                            result.append(" <Files>:")
+                            for file_tag in files_tag.findall("File"):
+                                ...
+
                         if files_tag is not None:
                             result.append(" <Files>:")
 
@@ -115,19 +123,19 @@ class VehicleFilesViewer(QMainWindow):
                                 filename = file_tag.attrib.get("filename", "")
                                 result.append(f"    [ID {file_id}] {filename}")
 
-                                # Corrige o caminho da imagem baseado em $data
-                                if filename.startswith("$data"):
-                                    relative_path = filename.replace("$data", "data").lstrip("/")
-                                    image_path = os.path.join(data_base_path, relative_path)
+                                if filename.startswith("$data/"):
+                                    relative_path = filename.replace("$data/", "data/")
+                                    altere_format = relative_path.replace("png", "dds")
+                                    image_path = os.path.join(data_base_path, altere_format)
                                 else:
                                     image_path = os.path.join(base_path, filename)
+
 
                                 image_path = os.path.normpath(image_path)
                                 print("Caminhos das imagens", image_path)
 
-                                # Mostra imagens PNG que existem
-                                if filename.lower().endswith(".png") and os.path.isfile(image_path):
-                                    self.add_image_to_layout(image_path)
+                                self.add_image_to_layout(image_path, file_id)
+
                         else:
                             result.append(" <Files> não encontrado.")
 
@@ -149,17 +157,48 @@ class VehicleFilesViewer(QMainWindow):
         self.output.setPlainText("\n".join(result))
 
 
+    def add_image_to_layout(self, image_path, file_id):
+      image_container = QWidget()
+      image_layout = QVBoxLayout()
+      image_container.setLayout(image_layout)
 
+      label = QLabel()
 
-    def add_image_to_layout(self, image_path):
-        label = QLabel()
-        pixmap = QPixmap(image_path)
-        if pixmap.isNull():
-            return
-        pixmap = pixmap.scaledToWidth(200, Qt.SmoothTransformation)
-        label.setPixmap(pixmap)
-        label.setToolTip(image_path)
-        self.images_layout.addWidget(label)
+      if image_path.lower().endswith(".dds"):
+          try:
+              img = iio.imread(image_path)
+              height, width, channels = img.shape
+
+              if channels == 4:
+                  fmt = QImage.Format_RGBA8888
+              elif channels == 3:
+                  fmt = QImage.Format_RGB888
+              else:
+                  img = img[:, :, :3]
+                  fmt = QImage.Format_RGB888
+
+              qimg = QImage(img.data, width, height, width * channels, fmt)
+              pixmap = QPixmap.fromImage(qimg)
+          except Exception as e:
+              print(f"Erro ao abrir DDS {image_path}: {e}")
+              return
+      else:
+          pixmap = QPixmap(image_path)
+
+      if pixmap.isNull():
+          return
+
+      pixmap = pixmap.scaledToWidth(100, Qt.SmoothTransformation)
+      label.setPixmap(pixmap)
+      label.setToolTip(image_path)
+
+      id_label = QLabel(f"ID: {file_id}")
+      id_label.setAlignment(Qt.AlignCenter)
+
+      image_layout.addWidget(label)
+      image_layout.addWidget(id_label)
+      self.images_layout.addWidget(image_container)
+
 
 
 if __name__ == "__main__":

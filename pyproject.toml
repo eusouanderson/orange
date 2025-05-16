@@ -13,6 +13,11 @@ homepage = "https://github.com/eusouanderson/orange-micro-framework"
 repository = "https://github.com/eusouanderson/orange-micro-framework"
 keywords = [ "cython", "pyinstaller", "python-packager", "compiler", "executable",]
 
+packages = [
+    { include = "core", from = "src" },
+    { include = "components", from = "src" },
+]
+
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"
 pyside6 = "^6.8.0.2"
@@ -27,6 +32,9 @@ pyaudio = "^0.2.14"
 pypdf2 = "^3.0.1"
 python-docx = "^1.1.2"
 toml = "^0.10.2"
+pillow = "^11.2.1"
+imageio = "^2.37.0"
+imageio-ffmpeg = "^0.6.0"
 
 [tool.poetry.dependencies.lxml]
 extras = [ "html-clean",]
