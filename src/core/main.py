@@ -30,10 +30,17 @@ class VehicleFilesViewer(QMainWindow):
         self.load_button = QPushButton("Carregar Arquivos .i3d")
         self.load_button.clicked.connect(self.load_i3d_files)
 
+        #Barra de Busca
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Buscar por ID ou texto...")
+        self.search_input.textChanged.connect(self.search_output_text)
+
         # Área de texto para mostrar info (Files + Materials)
         self.output = QTextEdit()
         self.output.setReadOnly(True)
         self.output.setMinimumWidth(500)
+
+
 
         # Área para mostrar imagens
         self.images_area = QWidget()
@@ -43,7 +50,7 @@ class VehicleFilesViewer(QMainWindow):
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.images_area)
-        self.scroll_area.setMinimumHeight(250)
+        self.scroll_area.setMinimumHeight(150)
 
         # Layout geral
         input_layout = QHBoxLayout()
@@ -53,12 +60,30 @@ class VehicleFilesViewer(QMainWindow):
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(input_layout)
+        main_layout.addWidget(self.search_input)
         main_layout.addWidget(self.output)
         main_layout.addWidget(self.scroll_area)
 
         container = QWidget()
         container.setLayout(main_layout)
         self.setCentralWidget(container)
+    def search_output_text(self, text):
+        cursor = self.output.textCursor()
+        document = self.output.document()
+
+        # Limpa seleções anteriores
+        cursor.setPosition(0)
+        self.output.setTextCursor(cursor)
+
+        if not text:
+            return
+        # Procura o texto
+        found = document.find(text)
+        if found.isNull():
+            QMessageBox.information(self, "Busca", f"Nenhum resultado encontrado para: {text}")
+        else:
+            self.output.setTextCursor(found)
+            self.output.ensureCursorVisible()
 
     def setup_font_icon(self):
         path_font = os.path.abspath("src/assets/font/JetBrainsMono.ttf")
@@ -77,6 +102,8 @@ class VehicleFilesViewer(QMainWindow):
             self.path_input.setText(folder)
 
     def load_i3d_files(self):
+        self.file_id_to_type = {}
+
         base_path = self.path_input.text()
 
         if not os.path.isdir(base_path):
@@ -85,8 +112,6 @@ class VehicleFilesViewer(QMainWindow):
 
         # Caminho absoluto para a raiz da pasta 'data'
         data_base_path = os.path.abspath(os.path.join(base_path, "..", "..", ".."))
-
-
 
         self.output.clear()
 
@@ -109,20 +134,16 @@ class VehicleFilesViewer(QMainWindow):
                         tree = ET.parse(full_path)
                         root_xml = tree.getroot()
 
-                        files_tags = root_xml.findall(".//Files")
-                        for files_tag in files_tags:
-                            result.append(" <Files>:")
-                            for file_tag in files_tag.findall("File"):
-                                ...
-
+                        # --- Bloco <Files> ---
+                        files_tag = root_xml.find("Files")
                         if files_tag is not None:
                             result.append(" <Files>:")
-
                             for file_tag in files_tag.findall("File"):
                                 file_id = file_tag.attrib.get("fileId", "")
                                 filename = file_tag.attrib.get("filename", "")
                                 result.append(f"    [ID {file_id}] {filename}")
 
+                                # Caminho da imagem
                                 if filename.startswith("$data/"):
                                     relative_path = filename.replace("$data/", "data/")
                                     altere_format = relative_path.replace("png", "dds")
@@ -130,22 +151,27 @@ class VehicleFilesViewer(QMainWindow):
                                 else:
                                     image_path = os.path.join(base_path, filename)
 
-
                                 image_path = os.path.normpath(image_path)
                                 print("Caminhos das imagens", image_path)
-
                                 self.add_image_to_layout(image_path, file_id)
-
                         else:
                             result.append(" <Files> não encontrado.")
 
+                        # --- Bloco <Materials> ---
                         materials_tag = root_xml.find("Materials")
                         if materials_tag is not None:
-                            result.append("\n <Materials>:")
-                            for mat_tag in materials_tag.findall("Material"):
-                                mat_id = mat_tag.attrib.get("id", "")
-                                mat_name = mat_tag.attrib.get("name", "")
-                                result.append(f"    [ID {mat_id}] {mat_name}")
+                            result.append("\n<Materials>")
+                            for material in materials_tag:
+                                xml_str = ET.tostring(material, encoding="unicode")
+                                result.append(xml_str.strip())
+
+                                # Mapeia o tipo de textura pelo fileId
+                                for texture_tag in material:
+                                    tag_name = texture_tag.tag
+                                    file_id = texture_tag.attrib.get("fileId")
+                                    if file_id:
+                                        self.file_id_to_type[file_id] = tag_name
+                            result.append("</Materials>")
                         else:
                             result.append(" <Materials> não encontrado.")
 
@@ -155,6 +181,7 @@ class VehicleFilesViewer(QMainWindow):
                     result.append("")
 
         self.output.setPlainText("\n".join(result))
+
 
 
     def add_image_to_layout(self, image_path, file_id):
