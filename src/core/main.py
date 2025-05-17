@@ -138,7 +138,7 @@ class VehicleFilesViewer(QMainWindow):
             if widget:
                 widget.setParent(None)
 
-        # 🧠 Detecta a pasta base do "data"
+        #Detecta a pasta base do "data"
         parts = os.path.normpath(base_path).split(os.sep)
         if "data" in parts:
             data_index = parts.index("data")
@@ -170,7 +170,7 @@ class VehicleFilesViewer(QMainWindow):
                                 filename = file_tag.attrib.get("filename", "")
                                 result.append(f"    [ID {file_id}] {filename}")
 
-                                # 🔍 Resolução do caminho da imagem
+                                # Resolução do caminho da imagem
                                 if filename.startswith("$data/"):
                                     relative_path = filename.replace("$data/", "")
                                     image_path = os.path.join(data_base_path, relative_path)
@@ -280,6 +280,41 @@ class VehicleFilesViewer(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setStyleSheet("""
+    QWidget {
+        background-color: #1e1e1e;
+        color: #ffffff;
+    }
+
+    QPushButton {
+        background-color: #333333;
+        color: #ffffff;
+        border: 1px solid #555555;
+        padding: 5px;
+        border-radius: 4px;
+    }
+
+    QPushButton:hover {
+        background-color: #444444;
+    }
+
+    QLineEdit, QTextEdit {
+        background-color: #2e2e2e;
+        color: #ffffff;
+        border: 1px solid #555555;
+        border-radius: 4px;
+        padding: 3px;
+    }
+
+    QLabel {
+        color: #ffffff;
+    }
+
+    QScrollArea {
+        border: none;
+    }
+""")
+
     viewer = VehicleFilesViewer()
     viewer.show()
     sys.exit(app.exec())
