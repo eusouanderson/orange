@@ -1,169 +1,154 @@
 import sys
 import os
-import xml.etree.ElementTree as ET
-
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QWidget,
-    QPushButton, QLineEdit, QTextEdit, QFileDialog,
-    QMessageBox, QLabel, QScrollArea, QHBoxLayout
+import re
+import webbrowser
+import urllib.parse
+import pandas as pd
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QPushButton,
+    QFileDialog, QLabel, QTableWidget, QTableWidgetItem, QMessageBox
 )
-from PySide6.QtGui import QIcon, QFont, QFontDatabase, QPixmap
-from PySide6.QtCore import Qt
 
+def formatar_telefone(numero):
+    numero = re.sub(r"\D", "", str(numero))
 
-class VehicleFilesViewer(QMainWindow):
+    if numero.startswith("55") and len(numero) > 11:
+        numero = numero[2:]
+
+    if len(numero) == 11:
+        return f"({numero[:2]}) {numero[2:7]}-{numero[7:]}"
+    elif len(numero) == 10:
+        return f"({numero[:2]}) {numero[2:6]}-{numero[6:]}"
+    else:
+        return numero
+
+class ClienteCSVViewer(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("FS25 Vehicles Files & Materials Viewer")
-        self.setGeometry(100, 100, 1000, 700)
+        self.setWindowTitle("Visualizador de Clientes CSV")
+        self.setGeometry(100, 100, 1800, 1000)
 
-        self.setup_font_icon()
+        self.layout = QVBoxLayout()
 
-        # Input e botões
-        self.path_input = QLineEdit()
-        self.path_input.setPlaceholderText("Cole o caminho da pasta 'vehicles' aqui...")
+        self.label = QLabel("Selecione um diretório contendo um arquivo CSV de clientes.")
+        self.layout.addWidget(self.label)
 
-        self.browse_button = QPushButton("Procurar Pasta")
-        self.browse_button.clicked.connect(self.browse_folder)
+        self.button = QPushButton("Selecionar Arquivo")
+        self.button.clicked.connect(self.selecionar_arquivo)
+        self.layout.addWidget(self.button)
 
-        self.load_button = QPushButton("Carregar Arquivos .i3d")
-        self.load_button.clicked.connect(self.load_i3d_files)
+        self.botao_whatsapp = QPushButton("Enviar WhatsApp")
+        self.botao_whatsapp.clicked.connect(self.enviar_whatsapp)
+        self.layout.addWidget(self.botao_whatsapp)
 
-        # Área de texto para mostrar info (Files + Materials)
-        self.output = QTextEdit()
-        self.output.setReadOnly(True)
-        self.output.setMinimumWidth(500)
 
-        # Área para mostrar imagens
-        self.images_area = QWidget()
-        self.images_layout = QHBoxLayout()
-        self.images_area.setLayout(self.images_layout)
 
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setWidget(self.images_area)
-        self.scroll_area.setMinimumHeight(250)
+        self.botao_salvar = QPushButton("Salvar CSV")
+        self.botao_salvar.clicked.connect(self.salvar_csv)
 
-        # Layout geral
-        input_layout = QHBoxLayout()
-        input_layout.addWidget(self.path_input)
-        input_layout.addWidget(self.browse_button)
-        input_layout.addWidget(self.load_button)
+        self.botao_formatar = QPushButton("Formatar Telefones")
+        self.botao_formatar.clicked.connect(self.formatar_coluna_telefone)
+        self.layout.addWidget(self.botao_formatar)
+        self.layout.addWidget(self.botao_salvar)
 
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(input_layout)
-        main_layout.addWidget(self.output)
-        main_layout.addWidget(self.scroll_area)
+        self.table = QTableWidget()
+        self.layout.addWidget(self.table)
 
-        container = QWidget()
-        container.setLayout(main_layout)
-        self.setCentralWidget(container)
+        self.setLayout(self.layout)
 
-    def setup_font_icon(self):
-        path_font = os.path.abspath("src/assets/font/JetBrainsMono.ttf")
-        path_icon = os.path.abspath("src/assets/images/icons/orange.ico")
-        if os.path.exists(path_font):
-            font_id = QFontDatabase.addApplicationFont(path_font)
-            font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
-            font = QFont(font_family, 10)
-            self.setFont(font)
-        if os.path.exists(path_icon):
-            self.setWindowIcon(QIcon(path_icon))
-
-    def browse_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Selecionar pasta vehicles")
-        if folder:
-            self.path_input.setText(folder)
-
-    def load_i3d_files(self):
-        base_path = self.path_input.text()
-
-        if not os.path.isdir(base_path):
-            QMessageBox.critical(self, "Erro", "Pasta inválida!")
+    def salvar_csv(self):
+        if not hasattr(self, 'df'):
+            QMessageBox.warning(self, "Erro", "Nenhum arquivo carregado para salvar.")
             return
 
-        # Caminho absoluto para a raiz da pasta 'data'
-        data_base_path = os.path.abspath(os.path.join(base_path, "../../../"))
+        linhas = self.table.rowCount()
+        colunas = self.table.columnCount()
 
-        self.output.clear()
+        dados = []
+        for i in range(linhas):
+            linha_dados = []
+            for j in range(colunas):
+                item = self.table.item(i, j)
+                linha_dados.append(item.text() if item else "")
+            dados.append(linha_dados)
 
-        # Remove imagens antigas do layout
-        for i in reversed(range(self.images_layout.count())):
-            widget = self.images_layout.itemAt(i).widget()
-            if widget:
-                widget.setParent(None)
+        self.df = pd.DataFrame(dados, columns=[self.table.horizontalHeaderItem(i).text() for i in range(colunas)])
 
-        result = []
+        file_path, _ = QFileDialog.getSaveFileName(self, "Salvar arquivo CSV", "", "CSV Files (*.csv)")
 
-        # Percorre todos os arquivos dentro da pasta base
-        for root, dirs, files in os.walk(base_path):
-            for file in files:
-                if file.endswith(".i3d"):
-                    full_path = os.path.join(root, file)
-                    result.append(f"### Arquivo: {full_path}\n")
+        if file_path:
+            try:
+                self.df.to_csv(file_path, index=False)
+                QMessageBox.information(self, "Sucesso", f"Arquivo salvo em:\n{file_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Erro ao salvar CSV", str(e))
+    def enviar_whatsapp(self):
+        colunas = [self.table.horizontalHeaderItem(i).text().lower() for i in range(self.table.columnCount())]
+        candidatos = ["phone", "telefone1", "celular", "contato"]
+        indice = next((i for i, nome in enumerate(colunas) if any(c in nome for c in candidatos)), -1)
 
-                    try:
-                        tree = ET.parse(full_path)
-                        root_xml = tree.getroot()
-
-                        files_tag = root_xml.find("Files")
-                        if files_tag is not None:
-                            result.append(" <Files>:")
-
-                            for file_tag in files_tag.findall("File"):
-                                file_id = file_tag.attrib.get("fileId", "")
-                                filename = file_tag.attrib.get("filename", "")
-                                result.append(f"    [ID {file_id}] {filename}")
-
-                                # Corrige o caminho da imagem baseado em $data
-                                if filename.startswith("$data"):
-                                    relative_path = filename.replace("$data", "data").lstrip("/")
-                                    image_path = os.path.join(data_base_path, relative_path)
-                                else:
-                                    image_path = os.path.join(base_path, filename)
-
-                                image_path = os.path.normpath(image_path)
-                                print("Caminhos das imagens", image_path)
-
-                                # Mostra imagens PNG que existem
-                                if filename.lower().endswith(".png") and os.path.isfile(image_path):
-                                    self.add_image_to_layout(image_path)
-                        else:
-                            result.append(" <Files> não encontrado.")
-
-                        materials_tag = root_xml.find("Materials")
-                        if materials_tag is not None:
-                            result.append("\n <Materials>:")
-                            for mat_tag in materials_tag.findall("Material"):
-                                mat_id = mat_tag.attrib.get("id", "")
-                                mat_name = mat_tag.attrib.get("name", "")
-                                result.append(f"    [ID {mat_id}] {mat_name}")
-                        else:
-                            result.append(" <Materials> não encontrado.")
-
-                    except ET.ParseError:
-                        result.append("  Erro ao analisar XML.")
-
-                    result.append("")
-
-        self.output.setPlainText("\n".join(result))
-
-
-
-
-    def add_image_to_layout(self, image_path):
-        label = QLabel()
-        pixmap = QPixmap(image_path)
-        if pixmap.isNull():
+        if indice == -1:
+            QMessageBox.warning(self, "Erro", "Nenhuma coluna de telefone encontrada.")
             return
-        pixmap = pixmap.scaledToWidth(200, Qt.SmoothTransformation)
-        label.setPixmap(pixmap)
-        label.setToolTip(image_path)
-        self.images_layout.addWidget(label)
 
+        mensagem = "Olá! Esta é uma mensagem automática."
+
+        for linha in range(self.table.rowCount()):
+            item = self.table.item(linha, indice)
+            if item:
+                numero_raw = item.text()
+                numero = re.sub(r"\D", "", numero_raw)
+                if not numero.startswith("55"):
+                    numero = "55" + numero
+
+                texto_url = urllib.parse.quote(mensagem)
+                url = f"https://web.whatsapp.com/send?phone={numero}&text={texto_url}"
+
+                webbrowser.open(url)
+    def selecionar_arquivo(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Selecionar Arquivo CSV", "", "CSV Files (*.csv)")
+        if file_path:
+            self.carregar_csv(file_path)
+
+        else:
+            QMessageBox.information(self, "Erro", f"Nenhum arquivo encontrado em:\n{file_path}")
+
+
+    def carregar_csv(self, file_path):
+        try:
+            self.df = pd.read_csv(file_path)
+            self.table.setRowCount(self.df.shape[0])
+            self.table.setColumnCount(self.df.shape[1])
+            self.table.setHorizontalHeaderLabels(self.df.columns)
+
+            for i in range(self.df.shape[0]):
+                for j in range(self.df.shape[1]):
+                    self.table.setItem(i, j, QTableWidgetItem(str(self.df.iat[i, j])))
+
+            self.label.setText(f"Arquivo carregado: {os.path.basename(file_path)}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erro ao carregar CSV", str(e))
+
+    def formatar_coluna_telefone(self):
+        colunas = [self.table.horizontalHeaderItem(i).text().lower() for i in range(self.table.columnCount())]
+        candidatos = ["phone", "telefone1", "celular", "contato"]
+        indice = next((i for i, nome in enumerate(colunas) if any(c in nome for c in candidatos)), -1)
+
+        if indice == -1:
+            QMessageBox.warning(self, "Erro", "Nenhuma coluna de telefone encontrada.")
+            return
+
+        for linha in range(self.table.rowCount()):
+            item = self.table.item(linha, indice)
+            if item:
+                texto = item.text()
+                formatado = formatar_telefone(texto)
+                self.table.setItem(linha, indice, QTableWidgetItem(formatado))
+
+        QMessageBox.information(self, "Sucesso", "Telefones formatados com sucesso!")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    viewer = VehicleFilesViewer()
-    viewer.show()
+    window = ClienteCSVViewer()
+    window.show()
     sys.exit(app.exec())
