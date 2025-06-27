@@ -44,7 +44,7 @@ do
 done
 
 # Usa o Poetry para extrair a versão corretamente
-VERSION=$(poetry run $PYTHON_CMD -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
+VERSION='3.0.0' || $(poetry run $PYTHON_CMD -c "import toml; print(toml.load('pyproject.toml')['tool']['poetry']['version'])")
 
 if [ -z "$VERSION" ]; then
     echo "Erro: Não foi possível obter a versão do pyproject.toml"

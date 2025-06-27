@@ -3,71 +3,62 @@
 # Detectar o sistema operacional
 OS=$(uname -s)
 
-# Obter o diretório absoluto do script
+# Caminhos do projeto
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_PATH="$SCRIPT_DIR/src"
 APP_PATH="$PROJECT_PATH/core/main.py"
 
-# Configuração comum
+# PYTHONPATH comum
 export PYTHONPATH="$PYTHONPATH:$PROJECT_PATH"
 
-# Configurações específicas para Linux
-if [ "$OS" == "Linux" ]; then
-    echo "Detectado: Linux"
+# Configurações específicas por OS
+if [[ "$OS" == "Linux" ]]; then
+    echo "🟢 Linux detectado"
     export QT_QPA_PLATFORM=xcb
-    echo "PYTHONPATH configurado para: $PYTHONPATH"
-    echo "Variáveis de ambiente configuradas para Linux."
-fi
-
-# Configurações específicas para Windows
-if [[ "$OS" == MINGW* || "$OS" == CYGWIN* || "$OS" == "Darwin" ]]; then
-    echo "Detectado: Windows"
+elif [[ "$OS" == MINGW* || "$OS" == CYGWIN* || "$OS" == "Darwin" ]]; then
+    echo "🟦 Windows (Git Bash/Cygwin) detectado"
     export ENV=development
     export DEV_ENV=true
-    echo "PYTHONPATH configurado para: $PYTHONPATH"
-    echo "Variáveis de ambiente configuradas para Windows."
+else
+    echo "⚠️ Sistema desconhecido: $OS"
 fi
 
-# Função para executar o app
+echo "PYTHONPATH: $PYTHONPATH"
+
+# Função principal
 executar_app() {
-    echo "Executando o aplicativo..."
+    echo "🚀 Executando o aplicativo..."
     poetry run python "$APP_PATH"
     return $?
 }
 
-# Verificar se o arquivo main.py existe antes de executar
+# Verificação do arquivo
 if [ ! -f "$APP_PATH" ]; then
-    echo "Erro: O arquivo main.py não foi encontrado no caminho especificado: $APP_PATH"
+    echo "❌ Arquivo não encontrado: $APP_PATH"
     exit 1
 fi
 
-# Primeira tentativa de execução
 executar_app
 STATUS=$?
 
-# Se falhou e estamos no Linux, tentar instalar dependência e executar novamente
+# Tratamento para Linux (Qt)
 if [ "$STATUS" -ne 0 ] && [ "$OS" == "Linux" ]; then
-    echo "A execução falhou. Verificando dependência 'libxcb-cursor0'..."
+    echo "⚠️ Execução falhou. Verificando libxcb-cursor0..."
 
     if ! dpkg -s libxcb-cursor0 >/dev/null 2>&1; then
-        echo "Tentando instalar libxcb-cursor0..."
-        if command -v sudo >/dev/null 2>&1; then
-            sudo apt update && sudo apt install -y libxcb-cursor0
-        else
-            echo "Erro: 'sudo' não disponível. Instale manualmente o pacote: libxcb-cursor0"
-            exit 1
-        fi
+        echo "📦 Instalando libxcb-cursor0..."
+        sudo apt update && sudo apt install -y libxcb-cursor0
     else
-        echo "'libxcb-cursor0' já está instalado. Pode haver outro problema com o Qt."
+        echo "✅ libxcb-cursor0 já instalado."
     fi
 
-    echo "Tentando executar novamente..."
+    echo "🔁 Tentando novamente..."
     executar_app
     STATUS=$?
 fi
 
-# Verifica se a execução ainda falha
+# Final
 if [ "$STATUS" -ne 0 ]; then
-    echo "Erro: A aplicação falhou mesmo após tentativa de correção."
+    echo "💥 Falha na execução. Código de saída: $STATUS"
     exit $STATUS
 fi

@@ -20,25 +20,48 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"
-pyside6 = "^6.8.0.2"
-watchdog = "^6.0.0"
-pyinstaller = "^6.11.1"
-black = "^24.10.0"
-requests = "^2.32.3"
-beautifulsoup4 = "^4.12.3"
-requests-html = "^0.10.0"
-websockets = "8.1"
-pyaudio = "^0.2.14"
-pypdf2 = "^3.0.1"
-python-docx = "^1.1.2"
-toml = "^0.10.2"
-pillow = "^11.2.1"
-imageio = "^2.37.0"
-imageio-ffmpeg = "^0.6.0"
-
-[tool.poetry.dependencies.lxml]
-extras = [ "html-clean",]
-version = "^5.3.0"
+pandas = "*"
+pyautogui = "*"
+pywhatkit = "*"
+pyqt6 = "^6.9.1"
 
 [tool.poetry.group.dev.dependencies]
 cython = "^3.0.11"
+ruff = "^0.11.13"
+pytest = "^8.4.0"
+pytest-cov = "^6.2.1"
+taskipy = "^1.14.1"
+deptry = "^0.23.0"
+tomlkit = "^0.13.3"
+watchdog = "^6.0.0"
+tomli = "^2.2.1"
+pyinstaller = "^6.14.1"
+
+[tool.ruff]
+line-length = 79
+extend-exclude = ['migrations']
+
+
+[tool.ruff.lint]
+preview = true
+select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+ignore = ["PLR6301", "PLR0917", "PLR0913"]
+
+[tool.ruff.format]
+preview = true
+quote-style = 'single'
+
+[tool.pytest.ini_options]
+pythonpath = "."
+addopts = "--cov=fastapi_zero --cov-report=term-missing -p no:warnings"
+
+[tool.taskipy.tasks]
+lint = 'ruff check'
+pre_format = 'ruff check --fix'
+format = 'ruff format'
+run = './start.sh'
+pre_test = 'task lint'
+test = 'pytest -s -x --cov=fast_zero -vv'
+post_test = 'coverage html'
+sync-deps = "python scripts/sync_deps.py"
+dev = "python scripts/watch_and_reload.py"

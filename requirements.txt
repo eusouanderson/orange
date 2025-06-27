@@ -1,19 +1,5 @@
-altgraph==0.17.4 ; python_version >= "3.12" and python_version < "3.14"
-black==24.10.0 ; python_version >= "3.12" and python_version < "3.14"
-click==8.1.7 ; python_version >= "3.12" and python_version < "3.14"
-colorama==0.4.6 ; python_version >= "3.12" and python_version < "3.14" and platform_system == "Windows"
-macholib==1.16.3 ; python_version >= "3.12" and python_version < "3.14" and sys_platform == "darwin"
-mypy-extensions==1.0.0 ; python_version >= "3.12" and python_version < "3.14"
-packaging==24.2 ; python_version >= "3.12" and python_version < "3.14"
-pathspec==0.12.1 ; python_version >= "3.12" and python_version < "3.14"
-pefile==2023.2.7 ; python_version >= "3.12" and python_version < "3.14" and sys_platform == "win32"
-platformdirs==4.3.6 ; python_version >= "3.12" and python_version < "3.14"
-pyinstaller-hooks-contrib==2024.10 ; python_version >= "3.12" and python_version < "3.14"
-pyinstaller==6.11.1 ; python_version >= "3.12" and python_version < "3.14"
-pyside6-addons==6.8.0.2 ; python_version >= "3.12" and python_version < "3.14"
-pyside6-essentials==6.8.0.2 ; python_version >= "3.12" and python_version < "3.14"
-pyside6==6.8.0.2 ; python_version >= "3.12" and python_version < "3.14"
-pywin32-ctypes==0.2.3 ; python_version >= "3.12" and python_version < "3.14" and sys_platform == "win32"
-setuptools==75.6.0 ; python_version >= "3.12" and python_version < "3.14"
-shiboken6==6.8.0.2 ; python_version >= "3.12" and python_version < "3.14"
-watchdog==6.0.0 ; python_version >= "3.12" and python_version < "3.14"
+pandas==2.3.0
+pyautogui==0.9.54
+PyQt6==6.9.1
+PySide6==6.9.1
+pywhatkit==5.4

@@ -1,8 +1,8 @@
-import os
-import sys
-import subprocess
-import shutil
 import logging
+import os
+import shutil
+import subprocess
+import sys
 import zipfile
 
 logger = logging.getLogger(__name__)
