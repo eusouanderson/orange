@@ -2,6 +2,7 @@
 from PySide6.QtWidgets import QApplication
 from src.core.main import MyWindow
 
+
 def reload_application():
     app = QApplication([])
 
@@ -9,6 +10,7 @@ def reload_application():
     window.show()
 
     app.exec()
+
 
 if __name__ == "__main__":
     reload_application()

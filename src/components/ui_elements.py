@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QPushButton, QHBoxLayout
 
+
 def create_buttons(editor, file_operations):
     open_button = QPushButton("Abrir")
     open_button.setStyleSheet("background-color: #333333; color: #FFFFFF;")
@@ -17,5 +18,5 @@ def create_buttons(editor, file_operations):
     layout.addWidget(open_button)
     layout.addWidget(save_button)
     layout.addWidget(new_button)
-    
+
     return layout

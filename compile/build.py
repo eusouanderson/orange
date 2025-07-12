@@ -39,6 +39,7 @@ def clean_output_dir(output_dir, exe_name=None):
 
 def prepare_pyx(source_file, pyx_file):
     """Cria um arquivo .pyx a partir de um script Python."""
+    print("@@", source_file)
     try:
         shutil.copy(source_file, pyx_file)
         logger.info(f"Arquivo .pyx gerado: {pyx_file}")

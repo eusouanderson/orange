@@ -15,22 +15,20 @@ keywords = [ "cython", "pyinstaller", "python-packager", "compiler", "executable
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"
-pyside6 = "^6.8.0.2"
-watchdog = "^6.0.0"
-pyinstaller = "^6.11.1"
-black = "^24.10.0"
-requests = "^2.32.3"
-beautifulsoup4 = "^4.12.3"
-requests-html = "^0.10.0"
-websockets = "8.1"
-pyaudio = "^0.2.14"
-pypdf2 = "^3.0.1"
-python-docx = "^1.1.2"
-toml = "^0.10.2"
-
-[tool.poetry.dependencies.lxml]
-extras = [ "html-clean",]
-version = "^5.3.0"
 
 [tool.poetry.group.dev.dependencies]
 cython = "^3.0.11"
+colorama = "^0.4.6"
+tomli = "^2.2.1"
+pyinstaller = "^6.14.2"
+black = "^25.1.0"
+
+[tool.taskipy.tasks]
+test = "pytest"
+format = "black ."
+cythonize = "cythonize -i src/**/*.py"
+run = "python src/core/main.py"
+build = "python compile/build.py linux v0.1.145 --compile-all"
+clean_imp  = "python scripts/clean-imports.py"
+clean= "rm -rf build dist *.spec __pycache__ .pytest_cache"
+watch = "watchmedo shell-command --patterns='*.py' --recursive --command='task run' src/"

@@ -5,9 +5,17 @@ import webbrowser
 import urllib.parse
 import pandas as pd
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QPushButton,
-    QFileDialog, QLabel, QTableWidget, QTableWidgetItem, QMessageBox
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QPushButton,
+    QFileDialog,
+    QLabel,
+    QTableWidget,
+    QTableWidgetItem,
+    QMessageBox,
 )
+
 
 def formatar_telefone(numero):
     numero = re.sub(r"\D", "", str(numero))
@@ -22,6 +30,7 @@ def formatar_telefone(numero):
     else:
         return numero
 
+
 class ClienteCSVViewer(QWidget):
     def __init__(self):
         super().__init__()
@@ -30,7 +39,9 @@ class ClienteCSVViewer(QWidget):
 
         self.layout = QVBoxLayout()
 
-        self.label = QLabel("Selecione um diretório contendo um arquivo CSV de clientes.")
+        self.label = QLabel(
+            "Selecione um diretório contendo um arquivo CSV de clientes."
+        )
         self.layout.addWidget(self.label)
 
         self.button = QPushButton("Selecionar Arquivo")
@@ -40,8 +51,6 @@ class ClienteCSVViewer(QWidget):
         self.botao_whatsapp = QPushButton("Enviar WhatsApp")
         self.botao_whatsapp.clicked.connect(self.enviar_whatsapp)
         self.layout.addWidget(self.botao_whatsapp)
-
-
 
         self.botao_salvar = QPushButton("Salvar CSV")
         self.botao_salvar.clicked.connect(self.salvar_csv)
@@ -57,7 +66,7 @@ class ClienteCSVViewer(QWidget):
         self.setLayout(self.layout)
 
     def salvar_csv(self):
-        if not hasattr(self, 'df'):
+        if not hasattr(self, "df"):
             QMessageBox.warning(self, "Erro", "Nenhum arquivo carregado para salvar.")
             return
 
@@ -72,20 +81,34 @@ class ClienteCSVViewer(QWidget):
                 linha_dados.append(item.text() if item else "")
             dados.append(linha_dados)
 
-        self.df = pd.DataFrame(dados, columns=[self.table.horizontalHeaderItem(i).text() for i in range(colunas)])
+        self.df = pd.DataFrame(
+            dados,
+            columns=[self.table.horizontalHeaderItem(i).text() for i in range(colunas)],
+        )
 
-        file_path, _ = QFileDialog.getSaveFileName(self, "Salvar arquivo CSV", "", "CSV Files (*.csv)")
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Salvar arquivo CSV", "", "CSV Files (*.csv)"
+        )
 
         if file_path:
             try:
                 self.df.to_csv(file_path, index=False)
-                QMessageBox.information(self, "Sucesso", f"Arquivo salvo em:\n{file_path}")
+                QMessageBox.information(
+                    self, "Sucesso", f"Arquivo salvo em:\n{file_path}"
+                )
             except Exception as e:
                 QMessageBox.critical(self, "Erro ao salvar CSV", str(e))
+
     def enviar_whatsapp(self):
-        colunas = [self.table.horizontalHeaderItem(i).text().lower() for i in range(self.table.columnCount())]
+        colunas = [
+            self.table.horizontalHeaderItem(i).text().lower()
+            for i in range(self.table.columnCount())
+        ]
         candidatos = ["phone", "telefone1", "celular", "contato"]
-        indice = next((i for i, nome in enumerate(colunas) if any(c in nome for c in candidatos)), -1)
+        indice = next(
+            (i for i, nome in enumerate(colunas) if any(c in nome for c in candidatos)),
+            -1,
+        )
 
         if indice == -1:
             QMessageBox.warning(self, "Erro", "Nenhuma coluna de telefone encontrada.")
@@ -105,14 +128,18 @@ class ClienteCSVViewer(QWidget):
                 url = f"https://web.whatsapp.com/send?phone={numero}&text={texto_url}"
 
                 webbrowser.open(url)
+
     def selecionar_arquivo(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Selecionar Arquivo CSV", "", "CSV Files (*.csv)")
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Selecionar Arquivo CSV", "", "CSV Files (*.csv)"
+        )
         if file_path:
             self.carregar_csv(file_path)
 
         else:
-            QMessageBox.information(self, "Erro", f"Nenhum arquivo encontrado em:\n{file_path}")
-
+            QMessageBox.information(
+                self, "Erro", f"Nenhum arquivo encontrado em:\n{file_path}"
+            )
 
     def carregar_csv(self, file_path):
         try:
@@ -130,9 +157,15 @@ class ClienteCSVViewer(QWidget):
             QMessageBox.critical(self, "Erro ao carregar CSV", str(e))
 
     def formatar_coluna_telefone(self):
-        colunas = [self.table.horizontalHeaderItem(i).text().lower() for i in range(self.table.columnCount())]
+        colunas = [
+            self.table.horizontalHeaderItem(i).text().lower()
+            for i in range(self.table.columnCount())
+        ]
         candidatos = ["phone", "telefone1", "celular", "contato"]
-        indice = next((i for i, nome in enumerate(colunas) if any(c in nome for c in candidatos)), -1)
+        indice = next(
+            (i for i, nome in enumerate(colunas) if any(c in nome for c in candidatos)),
+            -1,
+        )
 
         if indice == -1:
             QMessageBox.warning(self, "Erro", "Nenhuma coluna de telefone encontrada.")
@@ -146,6 +179,7 @@ class ClienteCSVViewer(QWidget):
                 self.table.setItem(linha, indice, QTableWidgetItem(formatado))
 
         QMessageBox.information(self, "Sucesso", "Telefones formatados com sucesso!")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

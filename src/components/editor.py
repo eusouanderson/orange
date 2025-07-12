@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QPlainTextEdit
 
+
 class Editor(QPlainTextEdit):
     def __init__(self, font, parent=None):
         super().__init__(parent)
