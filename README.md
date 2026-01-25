@@ -273,7 +273,10 @@ make start              # Executa app em Python puro (dev)
 make watch              # Watch mode com auto-reload
 make build              # Build executável compilado
 make build-local        # Alias: build sem upload
-make test               # Roda 43 testes automatizados
+make test               # Roda TODOS os testes (framework + app)
+make test-framework     # Testes do Framework Orange (build, watch)
+make test-app           # Testes da Aplicação Calc3D
+make test-cov           # Testes com cobertura detalhada
 make test-performance   # Benchmarks de performance
 ```
 
@@ -289,17 +292,23 @@ make build PLATFORM=windows              # Cross-compile Windows
 
 ## 📊 Testes e Qualidade
 
-✅ **43 Testes Automatizados**
+✅ **43 Testes Automatizados** (separados em Framework + Aplicação)
 
 ```bash
-# Rodar tudo
+# Rodar TUDO
 make test
 
+# Apenas Framework (build system, watch mode, compilação)
+make test-framework
+
+# Apenas Aplicação (Calc3D)
+make test-app
+
 # Com cobertura detalhada
-poetry run pytest --cov=src --cov=scripts --cov-report=term-missing
+make test-cov
 
 # Apenas benchmarks de performance
-poetry run pytest tests/test_performance.py --benchmark-only
+make test-performance
 ```
 
 **Cobertura:**
