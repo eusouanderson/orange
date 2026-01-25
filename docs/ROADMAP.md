@@ -47,11 +47,11 @@ Este documento detalha o plano de desenvolvimento para Orange Framework, dividid
 #### [ ] Rodar Suite de Testes (`make test`)
 - **Ação:** Validar que ambiente está OK
   ```bash
-  make test  # Deve retornar: 43/43 PASSED
+  make test  # Deve retornar: 49/49 PASSED
   ```
 - **Resultado esperado:**
   ```
-  ======================== 43 passed in ~2.8s ========================
+  ======================== 49 passed (tempo aproximado similar) ========================
   ```
 - **Se falhar:**
   - Verifique Poetry install: `poetry install`
@@ -259,7 +259,7 @@ JANEIRO 2026        MARÇO           MAIO             DEZEMBRO
 ### ✅ Para IMEDIATO
 - [ ] `make build --compile-all` executa sem erros
 - [ ] Interface customizada funciona perfeitamente
-- [ ] 43/43 testes passam
+- [ ] 49/49 testes passam
 
 ### ✅ Para CURTO PRAZO
 - [ ] Performance +15% (benchmark antes/depois)

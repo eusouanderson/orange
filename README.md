@@ -1,6 +1,6 @@
 # 🟠 Orange Framework - Python → Cython → Executável Standalone
 
-**Versão:** 0.1.148 | **Status:** ✅ Production Ready | **Testes:** 43/43 ✅
+**Versão:** 0.1.148 | **Status:** ✅ Production Ready | **Testes:** 49/49 ✅
 
 Orange é um **micro framework profissional** que transforma código Python em executáveis binários otimizados, compilados com Cython e empacotados com PyInstaller. Inclui uma calculadora 3D (Calc3D) como exemplo para FreeCAD engineers.
 
@@ -261,7 +261,7 @@ self.combo_opcoes.addItems(["Opção 1", "Opção 2"])
 | **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)** | Setup, primeiros passos detalhados | Iniciantes |
 | **[docs/BUILD_OPTIMIZATION_GUIDE.md](docs/BUILD_OPTIMIZATION_GUIDE.md)** | Cython, otimizações, type hints, performance | Devs experientes |
 | **[docs/CYTHON_VALIDATION_REPORT.md](docs/CYTHON_VALIDATION_REPORT.md)** | Análise técnica completa, benchmarks | Tech leads |
-| **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)** | Coverage detalhado, 43 testes | QA/Testers |
+| **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)** | Coverage detalhado, 49 testes | QA/Testers |
 | **[docs/ROADMAP.md](docs/ROADMAP.md)** | Próximas features, timeline | Planejamento |
 
 ---
@@ -288,11 +288,27 @@ make build REPO=user/repo                # Upload GitHub repo custom
 make build PLATFORM=windows              # Cross-compile Windows
 ```
 
+### Build no Windows (via WSL)
+1) No Windows (PowerShell/CMD), acesse o projeto: `cd \\wsl$\\Ubuntu\\home\\{your user}\\orange`
+2) Instale dependências Windows:
+    - Python 3.10/3.11/3.12 (mesma versão do projeto)
+    - Microsoft C++ Build Tools (Desktop development with C++, Windows 10/11 SDK)
+3) Configure ambiente no Windows:
+    - `python -m pip install --upgrade pip`
+    - `pip install poetry`
+    - `poetry env use C:\\caminho\\para\\python.exe`
+    - `poetry install`
+4) Gerar executável Windows:
+    - `make build PLATFORM=windows TAG=vX.Y.Z`
+    - ou mais rápido: `make build PLATFORM=windows TAG=vX.Y.Z FLAGS="--compile-all --no-upload"`
+5) Saída esperada: `dist/Orange.exe` (mais `Orange-<tag>.zip`).
+💡 Dica: se der erro de MSVC, use o "x64 Native Tools Command Prompt" e repita o make.
+
 ---
 
 ## 📊 Testes e Qualidade
 
-✅ **43 Testes Automatizados** (separados em Framework + Aplicação)
+✅ **49 Testes Automatizados** (separados em Framework + Aplicação)
 
 ```bash
 # Rodar TUDO
@@ -475,4 +491,4 @@ QT_QPA_PLATFORM=offscreen make start
 ---
 
 **Última atualização:** Janeiro 2026 | **Versão:** 0.1.148  
-**Status:** ✅ Production Ready | **Testes:** 43/43 PASSING
+**Status:** ✅ Production Ready | **Testes:** 49/49 PASSING

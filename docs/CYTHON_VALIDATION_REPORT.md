@@ -123,7 +123,7 @@ Orange-0.1.148.zip
 
 ## 📋 Testes Executados (v0.1.148)
 
-### Total: **43 Tests PASSING** ✅
+### Total: **49 Tests PASSING** ✅
 
 ```
 Test Category              Count   Status   Coverage
@@ -131,12 +131,13 @@ Test Category              Count   Status   Coverage
 Main App Tests               16    ✅ PASS   99%
 Watch Mode Tests             11    ✅ PASS   62%
 Build Helpers Tests           4    ✅ PASS   24%
-Performance Benchmarks        6    ✅ PASS   -
+Build Pipeline Tests          6    ✅ PASS   -
+Performance Benchmarks       12    ✅ PASS   -
 Stress Tests                  3    ✅ PASS   -
 Optimization Impact Tests     2    ✅ PASS   -
 Memory Efficiency Tests       1    ✅ PASS   -
 ────────────────────────────────────────────────────
-TOTAL                        43    ✅ PASS   65%
+TOTAL                        49    ✅ PASS   65%
 ```
 
 ### Tempo de Execução
@@ -252,7 +253,7 @@ def calcular_multiplas_distancias_paralelo(self, pontos: list):
 ✅ **Executável seguro** - Código compilado, não exposto  
 ✅ **Performance sólida** - ~1ms por operação (UI-limited)  
 ✅ **Distribuição elegante** - Arquivo único, cross-platform  
-✅ **Testes completos** - 43 testes cobrindo tudo  
+✅ **Testes completos** - 49 testes cobrindo tudo  
 
 ### **Potencial de otimização**
 
@@ -287,4 +288,4 @@ Ele está:
 **Status:** 🟢 **GREEN - Production Ready**  
 **Framework:** Orange v0.1.148  
 **Build:** Cython + PyInstaller + UPX  
-**Tests:** 43/43 ✅ Passing  
+**Tests:** 49/49 ✅ Passing  
