@@ -28,6 +28,7 @@ black = "^25.1.0"
 pytest = "^8.3.4"
 watchdog = "^4.0.0"
 pytest-cov = "^7.0.0"
+pytest-benchmark = "^5.2.3"
 
 [tool.taskipy.tasks]
 test = "pytest"
