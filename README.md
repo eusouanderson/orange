@@ -89,7 +89,8 @@ QT_QPA_PLATFORM=offscreen ./start.sh
 
 ```bash
     # Via Makefile (recomendado)
-    make start
+    make start              # executa normalmente
+    make watch              # watch mode: reinicia ao salvar (hot reload)
 
     # Via script
     ./start.sh
@@ -102,6 +103,9 @@ O projeto inclui um **Makefile** para simplificar operações comuns:
 ```bash
 # Executar a aplicação (Calc3D)
 make start
+
+# Watch mode: reinicia automaticamente ao salvar arquivos Python
+make watch
 
 # Fazer build local (sem upload para GitHub)
 make build
@@ -119,17 +123,21 @@ make build TAG=v1.2.3 PLATFORM=linux FLAGS="--compile-all"
 make build FLAGS="--compile-all" REPO=seu_usuario/seu_repo
 ```
 
-### Variáveis do Makefile
+### Watch Mode (Hot Reload em Desenvolvimento)
 
-- **TAG**: versão/tag para o build (padrão: lido de `pyproject.toml`)
-- **PLATFORM**: `linux` ou `windows` (padrão: `linux`)
-- **FLAGS**: flags adicionais como `--compile-all`, `--no-upload` (padrão: `--compile-all --no-upload`)
-- **REPO**: repositório GitHub alvo (padrão: `eusouanderson/orange`)
+Para desenvolvimento iterativo com auto-reload:
 
-Exemplo:
 ```bash
-make build PLATFORM=windows TAG=v2.0.0 FLAGS="--compile-all" REPO=seu_usuario/seu_repo
+make watch
 ```
+
+Este comando:
+- Monitora mudanças em arquivos Python (`src/`)
+- Reinicia a aplicação automaticamente ao salvar
+- Ideal para desenvolvimento rápido sem parar/iniciar manualmente
+- Pressione `Ctrl+C` para sair
+
+**Dica:** Use em conjunto com seu editor (VS Code, PyCharm, etc.) para feedback imediato!
 
 
 **Para criar builds (Linux, Windows, WSL):**

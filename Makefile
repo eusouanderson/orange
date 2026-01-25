@@ -2,7 +2,7 @@
 
 OS := $(shell uname -s)
 
-.PHONY: build build-local
+.PHONY: build build-local start test watch
 
 # Valores padrão podem ser sobrescritos na linha de comando, ex:
 # make build TAG=v1.2.3 FLAGS="--compile-all"
@@ -20,4 +20,8 @@ build-local: build
 start:
 	@echo "Executando o aplicativo..."
 	QT_QPA_PLATFORM=xcb PYTHONPATH=$(PWD)/src poetry run python src/core/main.py
+
+watch:
+	@echo "Iniciando watch mode (recarrega ao salvar arquivos Python)..."
+	PYTHONPATH=$(PWD)/src poetry run python scripts/watch.py
 
