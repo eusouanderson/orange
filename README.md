@@ -161,15 +161,45 @@ Execute a suíte de testes com:
 
     # ou manualmente
     poetry run pytest -v
+    
+    # com cobertura detalhada
+    poetry run pytest --cov=src --cov=scripts --cov=compile --cov-report=term-missing
 ```
 
-A cobertura inclui testes para:
-- Conversão de unidades (mm, cm, m, polegadas, pés)
-- Geometria 2D (área retângulo, circunferência, área círculo)
-- Geometria 3D (volume, área superfície, distância 3D)
-- Helpers do build (Cython, PyInstaller)
+### Cobertura de Testes
 
-**Resultado esperado:** 10 testes passando ✅
+O projeto inclui **31 testes automatizados** cobrindo:
+
+#### Aplicação Principal (16 testes) - `tests/test_main_app.py`
+- ✅ Conversão de unidades: mm↔cm↔m↔in↔ft (2 testes)
+- ✅ Geometria 2D: área retângulo, área círculo, circunferência (3 testes)
+- ✅ Geometria 3D: volume cubo, volume esfera, área superfície esfera (3 testes)
+- ✅ Distância 3D com Euclidean: casos normais e diagonais (2 testes)
+- ✅ Ferramentas extras: raiz quadrada (positivo/negativo), potência (positivo/negativo) (4 testes)
+- ✅ Histórico: adicionar e limpar cálculos (2 testes)
+
+#### Watch Mode (11 testes) - `tests/test_watch_mode.py`
+- ✅ Filtro de eventos: ignora diretórios, arquivos não-Python, pastas ignoradas (4 testes)
+- ✅ Restart de aplicação: reinicia ao modificar .py, termina processo anterior (2 testes)
+- ✅ Lifecycle do processo: cria novo, mata com timeout (2 testes)
+- ✅ Configuração: verifica SRC_DIR, EXTENSIONS, IGNORE_DIRS (3 testes)
+
+#### Build Helpers (4 testes) - `tests/test_build_helpers.py`
+- ✅ Ensure dir exists, clean output dir, resource path resolution, prepare .pyx files
+
+### Métricas de Cobertura
+
+```
+Nome                     Stmts   Miss  Cover   
+─────────────────────────────────────────────
+src/core/main.py           293      4    99%   ⭐ Excelente
+scripts/watch.py            63     24    62%   ✅ Bom
+compile/build.py           164    125    24%   (mocking de subprocess/compilação)
+─────────────────────────────────────────────
+TOTAL                      562    195    65%   ✅ Sólido
+```
+
+**Resultado esperado:** 31 testes passando ✅
 
 Caso o projeto tenha uma estrutura com múltiplas pastas e você precise compilar todas elas, utilize o parâmetro **--compile-all** :
 
