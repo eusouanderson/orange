@@ -13,7 +13,7 @@ A grande vantagem desse framework é que ele resolve o problema comum de inconsi
 - **Criação automática de diretórios**: Configura os diretórios necessários para ambientes de desenvolvimento e produção.
 - **Automação de Build, Testes e Deploy**: Scripts que automatizam o processo de build, execução de testes e deploy para o GitHub Releases (Precisa ter instalado o CLI GH ).
 - **Geração de Executável com PyInstaller**: Depois de compilado com Cython, o projeto é transformado em um executável com PyInstaller.
-- **Aplicação exemplo (PyQt6)**: Inclui um visualizador de CSV com PyQt6 para listar clientes, formatar telefones e acionar mensagens WhatsApp.
+- **Aplicação exemplo (PyQt6)**: Calculadora 3D profissional para desenvolvimento em FreeCAD com conversão de unidades, geometria 2D/3D e histórico de cálculos.
 
 
 ### Features
@@ -51,11 +51,14 @@ Inclui suporte a múltiplos arquivos e diretórios.
         libxcb-xinerama0 libxkbcommon-x11-0 libxcb-render-util0
     ```
 
-## Aplicação de exemplo (PyQt6)
-- Visualiza arquivos CSV em uma tabela.
-- Formata telefones brasileiros (11 ou 10 dígitos) e aplica no grid.
-- Aciona links do WhatsApp Web para cada número encontrado.
-- Permite salvar o CSV após edições na própria tabela.
+## Aplicação de exemplo (Calc3D)
+- Calculadora 3D profissional para FreeCAD e engenharia.
+- **Conversão de Unidades**: mm, cm, m, polegadas, pés.
+- **Geometria 2D**: área retângulo, circunferência e área círculo.
+- **Geometria 3D**: volume paralelepípedo, esfera, área superfície, distância entre pontos em 3D.
+- **Ferramentas Extras**: raiz quadrada, potência (x^n).
+- **Histórico**: tabela com data/hora de todos os cálculos realizados.
+- Interface escura e responsiva com PyQt6.
 
 Se estiver em ambiente sem display (CI/WSL/SSH), use uma sessão X/Wayland ou execute offscreen:
 ```bash
@@ -82,11 +85,52 @@ QT_QPA_PLATFORM=offscreen ./start.sh
 
 ```
 
-4. Execute o projeto:
+4. Execute o projeto com `make` ou script direto:
 
 ```bash
+    # Via Makefile (recomendado)
+    make start
+
+    # Via script
     ./start.sh
 ```
+
+## Comandos Make
+
+O projeto inclui um **Makefile** para simplificar operações comuns:
+
+```bash
+# Executar a aplicação (Calc3D)
+make start
+
+# Fazer build local (sem upload para GitHub)
+make build
+
+# Alias para build
+make build-local
+
+# Rodar testes
+make test
+
+# Build com customização
+make build TAG=v1.2.3 PLATFORM=linux FLAGS="--compile-all"
+
+# Build e upload para GitHub
+make build FLAGS="--compile-all" REPO=seu_usuario/seu_repo
+```
+
+### Variáveis do Makefile
+
+- **TAG**: versão/tag para o build (padrão: lido de `pyproject.toml`)
+- **PLATFORM**: `linux` ou `windows` (padrão: `linux`)
+- **FLAGS**: flags adicionais como `--compile-all`, `--no-upload` (padrão: `--compile-all --no-upload`)
+- **REPO**: repositório GitHub alvo (padrão: `eusouanderson/orange`)
+
+Exemplo:
+```bash
+make build PLATFORM=windows TAG=v2.0.0 FLAGS="--compile-all" REPO=seu_usuario/seu_repo
+```
+
 
 **Para criar builds (Linux, Windows, WSL):**
 
@@ -100,14 +144,25 @@ QT_QPA_PLATFORM=offscreen ./start.sh
     # manual (script original)
     ./build.sh <repo>
 
-    # gerar binário para Windows a partir do Linux/WSL
-    # requisitos: mingw-w64, wine, patchelf
-    sudo apt-get update && sudo apt-get install -y mingw-w64 wine patchelf
-    PLATFORM=windows make build FLAGS="--compile-all --no-upload" TAG=v1.2.3
+## Testes
 
-    # gerar binário Linux a partir do Linux
-    PLATFORM=linux make build FLAGS="--compile-all --no-upload" TAG=v1.2.3
+Execute a suíte de testes com:
+
+```bash
+    make test
+
+    # ou manualmente
+    poetry run pytest -v
 ```
+
+A cobertura inclui testes para:
+- Conversão de unidades (mm, cm, m, polegadas, pés)
+- Geometria 2D (área retângulo, circunferência, área círculo)
+- Geometria 3D (volume, área superfície, distância 3D)
+- Helpers do build (Cython, PyInstaller)
+
+**Resultado esperado:** 10 testes passando ✅
+
 Caso o projeto tenha uma estrutura com múltiplas pastas e você precise compilar todas elas, utilize o parâmetro **--compile-all** :
 
 ```bash
@@ -125,25 +180,41 @@ Onde **repo** é o caminho estático do repositório. Exemplo:
 
 ### No Linux ou Windows
 
-Para rodar o projeto localmente, execute o seguinte comando:
+Para rodar o projeto localmente, execute:
 
 ```bash
-./start.sh
+make start
 ```
 
-- Ao executar o comando, será iniciado o projeto, e você verá uma calculadora que foi desenvolvida utilizando esta configuração.
+- Executa a Calc3D (calculadora 3D para FreeCAD).
+- Define automaticamente as variáveis de ambiente para Qt (XCB no Linux).
 
-Build para Produção:
+Se estiver em um ambiente sem display (SSH, WSL, CI):
 ```bash
-    ./build.sh
-```
-- Na raiz do seu projeto na pasta **dist** encontrar um arquivo compactado com nome:
-```bash
-    Orange-v0.1.1
+QT_QPA_PLATFORM=offscreen make start
 ```
 
-- Pretendo atualizar este projeto sempre que possível e, em breve, enviá-lo para o PyPI.
-- Agradeço a todos que baixaram o projeto. Juntos, vamos construir uma comunidade Python mais forte! Tamo junto! 🚀
+Build para Produção (com upload para GitHub):
+```bash
+    make build FLAGS="--compile-all" REPO=seu_usuario/seu_repo
+```
+
+Build Local (sem upload):
+```bash
+    make build  # padrão: --no-upload
+```
+
+## Cross-compilation para Windows (a partir de Linux/WSL)
+
+Requisitos:
+```bash
+    sudo apt-get update && sudo apt-get install -y mingw-w64 wine patchelf
+```
+
+Build:
+```bash
+    PLATFORM=windows make build FLAGS="--compile-all --no-upload" TAG=v1.2.3
+```
 
 
 # Tools
