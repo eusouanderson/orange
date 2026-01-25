@@ -106,6 +106,8 @@ def build_executable(platform, script_path, output_dir, icon_path, compile_all=F
     output_dir = os.path.join(project_dir, "..", "dist")
     logger.info(f"Diretório de saída: {output_dir}")
 
+    ensure_dir_exists(output_dir)
+
     script_name = os.path.join(project_dir, "..", "src", "core", "main.py")
     logger.info(f"Script principal: {script_name}")
 
@@ -238,21 +240,26 @@ def commit_and_push_changes(repo, tag, commit_message="Atualização do build co
 
 def main():
     if len(sys.argv) < 3:
-        logger.error("Uso: python build.py <platform> <tag> [repo] [--compile-all]")
+        logger.error(
+            "Uso: python build.py <platform> <tag> [repo] [--compile-all] [--no-upload]"
+        )
         logger.error("Plataformas: windows, linux")
         logger.error("[repo]: Repositório GitHub para upload.")
         logger.error("[--compile-all]: Compilar todos os arquivos Python.")
+        logger.error("[--no-upload]: Pular upload para GitHub Release (útil para testes).")
         sys.exit(1)
 
-    platform = sys.argv[1].lower()
-    tag = sys.argv[2]
-    compile_all = "--compile-all" in sys.argv
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if len(args) < 2:
+        logger.error("Argumentos insuficientes: informe plataforma e tag.")
+        sys.exit(1)
 
-    repo = (
-        sys.argv[3]
-        if len(sys.argv) > 3 and not sys.argv[3].startswith("--")
-        else "eusouanderson/orange"
-    )
+    platform = args[0].lower()
+    tag = args[1]
+    repo = args[2] if len(args) > 2 else "eusouanderson/orange"
+
+    compile_all = "--compile-all" in sys.argv
+    skip_upload = "--no-upload" in sys.argv
 
     if platform not in ["windows", "linux"]:
         logger.error("Plataforma inválida. Escolha entre 'windows' ou 'linux'.")
@@ -267,18 +274,14 @@ def main():
     zip_path = os.path.join(output_dir, f"Orange-{tag}.zip")
 
     try:
-        # console_commit_input = input("Digite o commit para o repositório: ").strip()
-        # console_repo_input = input("Digite o repositório para o upload: ").strip()
-
-        """if not console_commit_input or not console_repo_input:
-        raise ValueError("Commit ou repositório inválidos.")"""
-
         clean_output_dir(output_dir)
         build_executable(platform, script_path, output_dir, icon_path, compile_all)
         compact_output(output_dir, zip_path)
 
-        # commit_and_push_changes(repo, tag)
-        upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
+        if skip_upload:
+            logger.info("Upload pulado (--no-upload). Artefato pronto em dist/.")
+        else:
+            upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
     except subprocess.CalledProcessError as e:
         logger.error("Erro ao executar subprocesso: %s", e.stderr.decode())
     except Exception as e:

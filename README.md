@@ -13,6 +13,7 @@ A grande vantagem desse framework é que ele resolve o problema comum de inconsi
 - **Criação automática de diretórios**: Configura os diretórios necessários para ambientes de desenvolvimento e produção.
 - **Automação de Build, Testes e Deploy**: Scripts que automatizam o processo de build, execução de testes e deploy para o GitHub Releases (Precisa ter instalado o CLI GH ).
 - **Geração de Executável com PyInstaller**: Depois de compilado com Cython, o projeto é transformado em um executável com PyInstaller.
+- **Aplicação exemplo (PyQt6)**: Inclui um visualizador de CSV com PyQt6 para listar clientes, formatar telefones e acionar mensagens WhatsApp.
 
 
 ### Features
@@ -25,8 +26,6 @@ Inclui suporte a múltiplos arquivos e diretórios.
 **Build Automation**
 - Scripts .sh para compilar o projeto de forma automática.
 - Builds otimizados para Linux e Windows.
-
-Used to investigate your operating system by reading all active processes on your computer.
 
 **GitHub Integration**
 - Envia os builds diretamente para o GitHub Releases, reduzindo a complexidade do deploy.
@@ -41,6 +40,27 @@ Used to investigate your operating system by reading all active processes on you
 2. Configure as dependências listadas no arquivo requirements.txt ou instale usando o Poetry.
 3. Na pasta scripts na raiz do projeto tem um script de instalação ```"install.sh"```.
 4. Após a instalação concluida, navegue para o diretório raiz e execute o script ```"start.sh"```
+
+## Requisitos de sistema (Linux)
+- Python 3.10–3.13, Poetry.
+- Bibliotecas do sistema necessárias para o backend Qt (instale todas de uma vez):
+    ```bash
+    sudo apt-get update && sudo apt-get install -y \
+        libgl1 libegl1 libfontconfig1 libglib2.0-0 libxkbcommon0 \
+        libxcb-cursor0 libxcb-shape0 libxcb-icccm4 libxcb-keysyms1 \
+        libxcb-xinerama0 libxkbcommon-x11-0 libxcb-render-util0
+    ```
+
+## Aplicação de exemplo (PyQt6)
+- Visualiza arquivos CSV em uma tabela.
+- Formata telefones brasileiros (11 ou 10 dígitos) e aplica no grid.
+- Aciona links do WhatsApp Web para cada número encontrado.
+- Permite salvar o CSV após edições na própria tabela.
+
+Se estiver em ambiente sem display (CI/WSL/SSH), use uma sessão X/Wayland ou execute offscreen:
+```bash
+QT_QPA_PLATFORM=offscreen ./start.sh
+```
 
 ## Get Started
 1. Clone o repositório:
@@ -68,10 +88,25 @@ Used to investigate your operating system by reading all active processes on you
     ./start.sh
 ```
 
-**Para criar builds:**
+**Para criar builds (Linux, Windows, WSL):**
 
 ```bash
+    # via Makefile (recomendado, sem upload por padrão)
+    make build  # usa TAG do pyproject, --compile-all e --no-upload
+
+    # build + upload (remova --no-upload)
+    make build FLAGS="--compile-all" REPO=seu/repo TAG=v1.2.3
+
+    # manual (script original)
     ./build.sh <repo>
+
+    # gerar binário para Windows a partir do Linux/WSL
+    # requisitos: mingw-w64, wine, patchelf
+    sudo apt-get update && sudo apt-get install -y mingw-w64 wine patchelf
+    PLATFORM=windows make build FLAGS="--compile-all --no-upload" TAG=v1.2.3
+
+    # gerar binário Linux a partir do Linux
+    PLATFORM=linux make build FLAGS="--compile-all --no-upload" TAG=v1.2.3
 ```
 Caso o projeto tenha uma estrutura com múltiplas pastas e você precise compilar todas elas, utilize o parâmetro **--compile-all** :
 
