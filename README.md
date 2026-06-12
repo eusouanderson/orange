@@ -2,7 +2,7 @@
 
 **Versão:** 0.1.148 | **Status:** ✅ Production Ready | **Testes:** 49/49 ✅
 
-Orange é um **micro framework profissional** que transforma código Python em executáveis binários otimizados, compilados com Cython e empacotados com PyInstaller. Inclui uma calculadora 3D (Calc3D) como exemplo para FreeCAD engineers.
+Orange é um **micro framework profissional** concebido para compilar código Python em C nativo usando Cython, empacotando tudo em um executável binário autônomo (standalone) e otimizado com PyInstaller. O objetivo principal do framework é automatizar e simplificar o pipeline de compilação, distribuição e proteção de código de aplicações Python.
 
 ---
 
@@ -81,7 +81,7 @@ orange/
 │
 ├── src/                         ← ⭐ AQUI VOCÊ EDITA SEU CÓDIGO
 │   ├── core/
-│   │   └── main.py              ← Aplicação PyQt6 (Calc3D exemplo)
+│   │   └── main.py              ← Arquivo principal da aplicação Python a ser compilada
 │   ├── components/              ← Componentes reutilizáveis
 │   ├── assets/
 │   │   └── images/icons/        ← Ícones, imagens
@@ -179,7 +179,7 @@ from PyQt6.QtCore import Qt
 import math
 from datetime import datetime
 
-class Calc3D(QMainWindow):
+class MinhaAplicacao(QMainWindow):
     """Sua aplicação começa aqui!"""
     
     def __init__(self):
@@ -188,8 +188,8 @@ class Calc3D(QMainWindow):
     
     def initUI(self):
         """Configure sua interface aqui"""
-        self.setWindowTitle("Orange Framework - Calc3D")
-        self.setGeometry(100, 100, 600, 800)
+        self.setWindowTitle("Minha Aplicação Compilada")
+        self.setGeometry(100, 100, 800, 600)
 ```
 
 ### Onde Editar para Cada Tipo de Customização
@@ -211,7 +211,7 @@ def initUI(self):
 #### 2️⃣ Adicionar Novos Cálculos
 ```python
 # Arquivo: src/core/main.py
-# Classe: Calc3D
+# Classe: MinhaAplicacao
 
 def meu_novo_calculo(self):
     """Adicione sua lógica de cálculo aqui"""
@@ -275,7 +275,7 @@ make build              # Build executável compilado
 make build-local        # Alias: build sem upload
 make test               # Roda TODOS os testes (framework + app)
 make test-framework     # Testes do Framework Orange (build, watch)
-make test-app           # Testes da Aplicação Calc3D
+make test-app           # Testes da aplicação Python
 make test-cov           # Testes com cobertura detalhada
 make test-performance   # Benchmarks de performance
 ```
@@ -317,7 +317,7 @@ make test
 # Apenas Framework (build system, watch mode, compilação)
 make test-framework
 
-# Apenas Aplicação (Calc3D)
+# Apenas a aplicação principal
 make test-app
 
 # Com cobertura detalhada
