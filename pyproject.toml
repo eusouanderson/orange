@@ -5,13 +5,32 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "orange-micro-framework"
 version = "0.1.148"
-description = "Framework to compile Python projects with Cython and bundle executables using PyInstaller, including path corrections."
+description = "Professional Python compilation, optimization, and packaging framework using Cython, PyInstaller, and CI/CD."
 authors = [ "Anderson Rodrigues <eusouanderson@outlook.com>",]
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/eusouanderson/orange-micro-framework"
-repository = "https://github.com/eusouanderson/orange-micro-framework"
-keywords = [ "cython", "pyinstaller", "python-packager", "compiler", "executable",]
+homepage = "https://github.com/eusouanderson/orange"
+repository = "https://github.com/eusouanderson/orange"
+documentation = "https://github.com/eusouanderson/orange/blob/main/README.md"
+keywords = [ "cython", "pyinstaller", "python-packager", "compiler", "executable", "cicd", "cross-platform"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Cython",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Compilers",
+]
 packages = [{include = "orange"}]
 
 [tool.poetry.scripts]
