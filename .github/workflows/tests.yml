@@ -32,7 +32,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends build-essential upx
+          sudo apt-get install -y --no-install-recommends build-essential upx patchelf libegl1 libgl1-mesa-glx
 
       - name: Instalar Dependências de Sistema (macOS)
         if: runner.os == 'macOS'

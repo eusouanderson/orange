@@ -19,25 +19,58 @@ from orange.errors import OrangeError
 from orange.platform.detector import PlatformManager
 from orange.plugins.base import default_registry
 
+if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
+
+def _can_encode(text: str) -> bool:
+    try:
+        enc = getattr(sys.stdout, 'encoding', None) or 'utf-8'
+        text.encode(enc)
+        return True
+    except (UnicodeEncodeError, LookupError, AttributeError):
+        return False
+
+
+_HAS_UNICODE = _can_encode('🍊🩺✅❌⚠️ℹ️📦🔌📄•')
+SYM_ORANGE = '🍊' if _HAS_UNICODE else '[Orange]'
+SYM_DOCTOR = '🩺' if _HAS_UNICODE else '[Doctor]'
+SYM_OK = '✅' if _HAS_UNICODE else '[OK]'
+SYM_ERR = '❌' if _HAS_UNICODE else '[ERRO]'
+SYM_WARN = '⚠️ ' if _HAS_UNICODE else '[AVISO]'
+SYM_INFO = 'ℹ️ ' if _HAS_UNICODE else '[INFO]'
+SYM_PKG = '📦' if _HAS_UNICODE else '[Cache]'
+SYM_PLUGIN = '🔌' if _HAS_UNICODE else '[Plugin]'
+SYM_DOC = '📄' if _HAS_UNICODE else '[Projeto]'
+SYM_BULLET = '•' if _can_encode('•') else '*'
+
 
 def format_error(msg: str) -> str:
     """Formata mensagem de erro para o terminal."""
-    return click.style(f'❌ Erro: {msg}', fg='red', bold=True)
+    return click.style(f'{SYM_ERR} Erro: {msg}', fg='red', bold=True)
 
 
 def format_success(msg: str) -> str:
     """Formata mensagem de sucesso para o terminal."""
-    return click.style(f'✅ {msg}', fg='green', bold=True)
+    return click.style(f'{SYM_OK} {msg}', fg='green', bold=True)
 
 
 def format_info(msg: str) -> str:
     """Formata mensagem informativa para o terminal."""
-    return click.style(f'ℹ️  {msg}', fg='cyan')
+    return click.style(f'{SYM_INFO} {msg}', fg='cyan')
 
 
 def format_warning(msg: str) -> str:
     """Formata mensagem de aviso para o terminal."""
-    return click.style(f'⚠️  {msg}', fg='yellow')
+    return click.style(f'{SYM_WARN} {msg}', fg='yellow')
 
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']})
@@ -173,17 +206,19 @@ def build(
     if not quiet:
         click.echo(
             click.style(
-                f"\n🍊 Iniciando build de '{cfg.project.name}' (v{cfg.project.version})",
+                f"\n{SYM_ORANGE} Iniciando build de '{cfg.project.name}' (v{cfg.project.version})",
                 bold=True,
                 fg='yellow',
             )
         )
-        click.echo(f'   • Perfil:     {cfg.build.profile}')
+        click.echo(f'   {SYM_BULLET} Perfil:     {cfg.build.profile}')
         click.echo(
-            f'   • Cython:     {"Ativo" if cfg.compiler.cython else "Desativado"}'
+            f'   {SYM_BULLET} Cython:     {"Ativo" if cfg.compiler.cython else "Desativado"}'
         )
-        click.echo(f'   • Otimização: Nível {cfg.compiler.optimization}')
-        click.echo(f'   • Saída:      {cfg.build.output}\n')
+        click.echo(
+            f'   {SYM_BULLET} Otimização: Nível {cfg.compiler.optimization}'
+        )
+        click.echo(f'   {SYM_BULLET} Saída:      {cfg.build.output}\n')
 
     if dry_run:
         click.echo(
@@ -223,7 +258,7 @@ def doctor(ctx: click.Context) -> None:
     if not quiet:
         click.echo(
             click.style(
-                '\n🩺 Orange Doctor: Verificando ambiente e ferramentas...\n',
+                f'\n{SYM_DOCTOR} Orange Doctor: Verificando ambiente e ferramentas...\n',
                 bold=True,
                 fg='cyan',
             )
@@ -234,11 +269,17 @@ def doctor(ctx: click.Context) -> None:
 
     for name, ok, details in checks:
         if ok:
-            status_mark = click.style('✅ [OK]     ', fg='green', bold=True)
+            status_mark = click.style(
+                f'{SYM_OK} [OK]     ', fg='green', bold=True
+            )
         elif 'Opcional' in details:
-            status_mark = click.style('⚠️  [AVISO]  ', fg='yellow', bold=True)
+            status_mark = click.style(
+                f'{SYM_WARN} [AVISO]  ', fg='yellow', bold=True
+            )
         else:
-            status_mark = click.style('❌ [FALHA]  ', fg='red', bold=True)
+            status_mark = click.style(
+                f'{SYM_ERR} [FALHA]  ', fg='red', bold=True
+            )
             has_critical_failure = True
 
         click.echo(f'{status_mark} {name:<30} {details}')
@@ -362,13 +403,15 @@ def cache_status(ctx: click.Context) -> None:
 
     click.echo(
         click.style(
-            '\n📦 Estatísticas do Cache Orange:\n', bold=True, fg='cyan'
+            f'\n{SYM_PKG} Estatísticas do Cache Orange:\n',
+            bold=True,
+            fg='cyan',
         )
     )
-    click.echo(f'   • Diretório:         {stats["directory"]}')
-    click.echo(f'   • Entradas salvas:   {stats["cached_entries"]}')
+    click.echo(f'   {SYM_BULLET} Diretório:         {stats["directory"]}')
+    click.echo(f'   {SYM_BULLET} Entradas salvas:   {stats["cached_entries"]}')
     click.echo(
-        f'   • Espaço utilizado:  {stats["total_size_mb"]} MB ({stats["total_size_bytes"]} bytes)\n'
+        f'   {SYM_BULLET} Espaço utilizado:  {stats["total_size_mb"]} MB ({stats["total_size_bytes"]} bytes)\n'
     )
 
 
@@ -407,7 +450,9 @@ def plugins_list() -> None:
     registered = default_registry.list_plugins()
     click.echo(
         click.style(
-            '\n🔌 Plugins Registrados no Orange:\n', bold=True, fg='cyan'
+            f'\n{SYM_PLUGIN} Plugins Registrados no Orange:\n',
+            bold=True,
+            fg='cyan',
         )
     )
     if not registered:
@@ -416,7 +461,7 @@ def plugins_list() -> None:
 
     for p in registered:
         click.echo(
-            f'   • {click.style(p.name, bold=True)} (v{p.version}) - {p.description}'
+            f'   {SYM_BULLET} {click.style(p.name, bold=True)} (v{p.version}) - {p.description}'
         )
     click.echo('')
 
@@ -434,13 +479,15 @@ def plugins_info(plugin_name: str) -> None:
 
     click.echo(
         click.style(
-            f'\n🔌 Informações do Plugin: {p.name}\n', bold=True, fg='cyan'
+            f'\n{SYM_PLUGIN} Informações do Plugin: {p.name}\n',
+            bold=True,
+            fg='cyan',
         )
     )
-    click.echo(f'   • Nome:        {p.name}')
-    click.echo(f'   • Versão:      {p.version}')
-    click.echo(f'   • Descrição:   {p.description}')
-    click.echo(f'   • Classe:      {p.__class__.__name__}\n')
+    click.echo(f'   {SYM_BULLET} Nome:        {p.name}')
+    click.echo(f'   {SYM_BULLET} Versão:      {p.version}')
+    click.echo(f'   {SYM_BULLET} Descrição:   {p.description}')
+    click.echo(f'   {SYM_BULLET} Classe:      {p.__class__.__name__}\n')
 
 
 @plugins.command('install')
@@ -560,42 +607,48 @@ def info(ctx: click.Context) -> None:
 
     click.echo(
         click.style(
-            '\n🍊 Orange Framework - Informações do Ambiente\n',
+            f'\n{SYM_ORANGE} Orange Framework - Informações do Ambiente\n',
             bold=True,
             fg='cyan',
         )
     )
-    click.echo(f'   • Versão Orange:     {orange.__version__}')
+    click.echo(f'   {SYM_BULLET} Versão Orange:     {orange.__version__}')
     click.echo(
-        f'   • Versão Python:     {plat.python_version} ({plat.tools["python"].path})'
-    )
-    click.echo(f'   • Sistema:           {plat.system} ({plat.architecture})')
-    click.echo(
-        f'   • Compilador C:      {plat.tools["c_compiler"].version or "Não detectado"}'
+        f'   {SYM_BULLET} Versão Python:     {plat.python_version} ({plat.tools["python"].path})'
     )
     click.echo(
-        f'   • Cython:            {plat.tools["cython"].version or "Não detectado"}'
+        f'   {SYM_BULLET} Sistema:           {plat.system} ({plat.architecture})'
     )
     click.echo(
-        f'   • PyInstaller:       {plat.tools["pyinstaller"].version or "Não detectado"}'
+        f'   {SYM_BULLET} Compilador C:      {plat.tools["c_compiler"].version or "Não detectado"}'
     )
     click.echo(
-        f'   • UPX:               {plat.tools["upx"].version or "Não detectado"}'
+        f'   {SYM_BULLET} Cython:            {plat.tools["cython"].version or "Não detectado"}'
+    )
+    click.echo(
+        f'   {SYM_BULLET} PyInstaller:       {plat.tools["pyinstaller"].version or "Não detectado"}'
+    )
+    click.echo(
+        f'   {SYM_BULLET} UPX:               {plat.tools["upx"].version or "Não detectado"}'
     )
 
     try:
         cfg = ConfigManager(config_path).load()
         click.echo(
             click.style(
-                '\n📄 Projeto Atual (orange.toml):\n', bold=True, fg='yellow'
+                f'\n{SYM_DOC} Projeto Atual (orange.toml):\n',
+                bold=True,
+                fg='yellow',
             )
         )
-        click.echo(f'   • Nome:              {cfg.project.name}')
-        click.echo(f'   • Versão:            {cfg.project.version}')
-        click.echo(f'   • Entrada:           {cfg.project.entrypoint}')
-        click.echo(f'   • Perfil Padrão:     {cfg.build.profile}')
-        click.echo(f'   • Diretório Saída:   {cfg.build.output}')
+        click.echo(f'   {SYM_BULLET} Nome:              {cfg.project.name}')
+        click.echo(f'   {SYM_BULLET} Versão:            {cfg.project.version}')
+        click.echo(
+            f'   {SYM_BULLET} Entrada:           {cfg.project.entrypoint}'
+        )
+        click.echo(f'   {SYM_BULLET} Perfil Padrão:     {cfg.build.profile}')
+        click.echo(f'   {SYM_BULLET} Diretório Saída:   {cfg.build.output}')
     except Exception:
-        click.echo('\n📄 Projeto Atual: Nenhum orange.toml carregado.')
+        click.echo(f'\n{SYM_DOC} Projeto Atual: Nenhum orange.toml carregado.')
 
     click.echo('')

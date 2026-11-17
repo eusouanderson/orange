@@ -70,7 +70,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends build-essential upx patchelf
+        sudo apt-get install -y --no-install-recommends build-essential upx patchelf libegl1 libgl1-mesa-glx
 
     - name: Instalar dependências de sistema (macOS)
       if: runner.os == 'macOS'
