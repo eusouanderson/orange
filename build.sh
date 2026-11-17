@@ -25,6 +25,7 @@ export PROJECT_PATH
 # Extrai repositório e flags
 REPO=""
 COMPILE_ALL=""
+NO_UPLOAD=0
 
 for arg in "$@"
 do
@@ -37,7 +38,7 @@ do
             exit 0
             ;;
         --no-upload)
-            # ignorado, suportado para compatibilidade
+            NO_UPLOAD=1
             ;;
         *)
             # Assume que é o repositório (ex: eusouanderson/orange)
@@ -90,17 +91,25 @@ echo "Nova versão: $NEW_VERSION"
 
 # Build do projeto
 echo "Executando o build para a plataforma $PLATFORM com versão $NEW_VERSION..."
+EXTRA_FLAGS=""
 if [ -n "$COMPILE_ALL" ]; then
-    poetry run $PYTHON_CMD compile/build.py $PLATFORM v$NEW_VERSION $REPO $COMPILE_ALL
+    EXTRA_FLAGS="$EXTRA_FLAGS $COMPILE_ALL"
+fi
+if [ "$NO_UPLOAD" -eq 1 ]; then
+    EXTRA_FLAGS="$EXTRA_FLAGS --no-upload"
+fi
+
+poetry run $PYTHON_CMD compile/build.py $PLATFORM v$NEW_VERSION $REPO $EXTRA_FLAGS
+
+# Criar release no GitHub apenas se upload não foi desabilitado
+if [ "$NO_UPLOAD" -ne 1 ]; then
+    EXE_NAME="Orange"
+    if [ "$PLATFORM" = "windows" ]; then
+        EXE_NAME="Orange.exe"
+    fi
+
+    echo "Criando a release no GitHub com a versão $NEW_VERSION..."
+    gh release create v$NEW_VERSION dist/Orange-v$NEW_VERSION.zip --repo $REPO --title "Orange $NEW_VERSION" --notes "Release Orange $NEW_VERSION Platform: $PLATFORM"
 else
-    poetry run $PYTHON_CMD compile/build.py $PLATFORM v$NEW_VERSION $REPO
+    echo "Build concluído localmente (--no-upload)."
 fi
-
-# Criar release no GitHub
-EXE_NAME="Orange"
-if [ "$PLATFORM" = "windows" ]; then
-    EXE_NAME="Orange.exe"
-fi
-
-echo "Criando a release no GitHub com a versão $NEW_VERSION..."
-gh release create v$NEW_VERSION dist/Orange-v$NEW_VERSION.zip --repo $REPO --title "Orange $NEW_VERSION" --notes "Release Orange $NEW_VERSION Platform: $PLATFORM"
