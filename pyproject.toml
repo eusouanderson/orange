@@ -12,13 +12,45 @@ license = "MIT"
 homepage = "https://github.com/eusouanderson/orange-micro-framework"
 repository = "https://github.com/eusouanderson/orange-micro-framework"
 keywords = [ "cython", "pyinstaller", "python-packager", "compiler", "executable",]
-package-mode = false
+packages = [{include = "orange"}]
+
+[tool.poetry.scripts]
+orange = "orange.cli.main:cli"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"
 pandas = "^2.2.3"
 PyQt6 = "^6.8.0"
 Pillow = "^11.0.0"
+
+[tool.ruff]
+line-length = 79
+extend-exclude = ['migrations']
+
+[tool.ruff.lint]
+preview = true
+select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+ignore = [
+    'E501',     # line-too-long (formatação tratada pelo ruff format)
+    'PLR2004',  # magic-value-comparison
+    'PLR6301',  # no-self-use (necessário para slots Qt e métodos de teste/interface)
+    'PLR0912',  # too-many-branches
+    'PLR0913',  # too-many-arguments
+    'PLR0914',  # too-many-locals
+    'PLR0915',  # too-many-statements
+    'PLR0917',  # too-many-positional-arguments
+    'PLR1702',  # too-many-nested-blocks
+    'PLW0717',  # too-many-statements-in-try-clause
+    'PLW0603',  # global-statement
+    'PLC0415',  # import-outside-top-level
+]
+
+[tool.ruff.lint.per-file-ignores]
+'tests/*' = ['PT015', 'PT017']
+
+[tool.ruff.format]
+preview = true
+quote-style = 'single'
 
 [tool.poetry.group.dev.dependencies]
 cython = "^3.0.11"
@@ -30,13 +62,18 @@ pytest = "^8.3.4"
 watchdog = "^4.0.0"
 pytest-cov = "^7.0.0"
 pytest-benchmark = "^5.2.3"
+ruff = "^0.17.5"
+pyyaml = "^6.0.3"
 
 [tool.taskipy.tasks]
 test = "pytest"
-format = "black ."
+lint = "ruff check"
+format = "ruff format ."
 cythonize = "cythonize -i src/**/*.py"
 run = "python src/core/main.py"
 build = "python compile/build.py linux v0.1.145 --compile-all"
 clean_imp  = "python scripts/clean-imports.py"
 clean= "rm -rf build dist *.spec __pycache__ .pytest_cache"
 watch = "watchmedo shell-command --patterns='*.py' --recursive --command='task run' src/"
+
+

@@ -196,6 +196,7 @@ def _calcular_distancia_3d(self,
 # Usar multiprocessing para batch operations
 from concurrent.futures import ThreadPoolExecutor
 
+
 def calcular_multiplas_distancias_paralelo(self, pontos: list):
     with ThreadPoolExecutor(max_workers=4) as executor:
         # Cada thread roda C compilado em paralelo!

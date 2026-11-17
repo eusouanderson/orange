@@ -104,7 +104,7 @@ def prepare_pyx(source_file, pyx_file):
 ```python
 def compile_pyx_to_c(pyx_file, output_dir):
     """Transpila .pyx para C usando Cython"""
-    command = ["cython", "-3", "-o", output_c_file, pyx_file]
+    command = ['cython', '-3', '-o', output_c_file, pyx_file]
     subprocess.run(command)
     # Resultado: dist/main.pyx → dist/main.c (~5000+ linhas de C!)
 ```
@@ -120,12 +120,12 @@ def compile_pyx_to_c(pyx_file, output_dir):
 ### 4. **Bundling Completo**
 ```python
 command = [
-    "pyinstaller",
-    "--onefile",           # ← Executável único (não requer Python instalado)
-    "--noconsole",         # ← GUI, sem console
-    "--hidden-import=config",
-    "--add-data=...",
-    f"--upx-dir={upx_dir}", # ← UPX para compressão extra
+    'pyinstaller',
+    '--onefile',  # ← Executável único (não requer Python instalado)
+    '--noconsole',  # ← GUI, sem console
+    '--hidden-import=config',
+    '--add-data=...',
+    f'--upx-dir={upx_dir}',  # ← UPX para compressão extra
 ]
 ```
 
@@ -168,15 +168,18 @@ Edite `src/core/main.py` para adicionar type hints Cython:
 from math import sqrt
 from datetime import datetime
 
+
 def _converter_unidade(self, valor: float, de: str, para: str) -> float:
     """Converte unidades com tipos estáticos Cython"""
     para_mm: dict[str, float] = {...}
     return valor * para_mm[para] / para_mm[de]
 
-def _calcular_distancia_3d(self, x1: float, y1: float, z1: float,
-                            x2: float, y2: float, z2: float) -> float:
+
+def _calcular_distancia_3d(
+    self, x1: float, y1: float, z1: float, x2: float, y2: float, z2: float
+) -> float:
     """Calcula distância com tipos C nativos"""
-    return sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)
+    return sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
 ```
 
 **Ganho esperado:** +5-15% de performance adicional
@@ -242,11 +245,14 @@ cdef double calcular_distancia_3d_c(double x1, double y1, double z1,
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import cpu_count
 
+
 def calcular_multiplas_distancias(self, pontos_3d: list[tuple]) -> list[float]:
     """Calcula múltiplas distâncias em paralelo"""
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         # Usar Cython + threads = muito rápido!
-        return list(executor.map(self._calcular_distancia_3d_simple, pontos_3d))
+        return list(
+            executor.map(self._calcular_distancia_3d_simple, pontos_3d)
+        )
 ```
 
 **Ganho esperado:** 4-8x mais rápido (dependendo de CPU cores)
@@ -258,6 +264,7 @@ def calcular_multiplas_distancias(self, pontos_3d: list[tuple]) -> list[float]:
 ```python
 import gc
 
+
 def calcular_1_milhao_distancias(self):
     gc.disable()  # ← Desativa GC temporariamente
     try:
@@ -265,6 +272,7 @@ def calcular_1_milhao_distancias(self):
             self._calcular_distancia_3d(...)
     finally:
         gc.enable()  # ← Reativa
+
 
 # Ganho: 10-20% em loops intensivos
 ```

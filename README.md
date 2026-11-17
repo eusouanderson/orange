@@ -179,16 +179,17 @@ from PyQt6.QtCore import Qt
 import math
 from datetime import datetime
 
+
 class MinhaAplicacao(QMainWindow):
     """Sua aplicação começa aqui!"""
-    
+
     def __init__(self):
         super().__init__()
         self.initUI()
-    
+
     def initUI(self):
         """Configure sua interface aqui"""
-        self.setWindowTitle("Minha Aplicação Compilada")
+        self.setWindowTitle('Minha Aplicação Compilada')
         self.setGeometry(100, 100, 800, 600)
 ```
 
@@ -198,6 +199,7 @@ class MinhaAplicacao(QMainWindow):
 ```python
 # Arquivo: src/core/main.py
 # Função: initUI()
+
 
 def initUI(self):
     """Edite AQUI para mudar layout"""
@@ -213,18 +215,20 @@ def initUI(self):
 # Arquivo: src/core/main.py
 # Classe: MinhaAplicacao
 
+
 def meu_novo_calculo(self):
     """Adicione sua lógica de cálculo aqui"""
     valor = self.spin_entrada.value()
     resultado = valor * 2  # Seu cálculo
     self.label_saida.setText(str(resultado))
-    self._adicionar_historico("Meu Cálculo", str(resultado))
+    self._adicionar_historico('Meu Cálculo', str(resultado))
 ```
 
 #### 3️⃣ Estilizar Cores/Temas
 ```python
 # Arquivo: src/core/main.py
 # Função: _aplicar_tema()
+
 
 def _aplicar_tema(self):
     """Edite AQUI para mudar cores"""
@@ -245,11 +249,11 @@ self.spin_entrada.setRange(0, 10000)
 
 # Inputs de texto:
 self.entrada_texto = QLineEdit()
-self.entrada_texto.setPlaceholderText("Digite aqui...")
+self.entrada_texto.setPlaceholderText('Digite aqui...')
 
 # Combos/Dropdowns:
 self.combo_opcoes = QComboBox()
-self.combo_opcoes.addItems(["Opção 1", "Opção 2"])
+self.combo_opcoes.addItems(['Opção 1', 'Opção 2'])
 ```
 
 ---

@@ -1,8 +1,8 @@
-import os
-import sys
-import subprocess
-import shutil
 import logging
+import os
+import shutil
+import subprocess
+import sys
 import zipfile
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
     except Exception:
-        base_path = os.path.abspath(".")
+        base_path = os.path.abspath('.')
     return os.path.join(base_path, relative_path)
 
 
@@ -34,17 +34,17 @@ def clean_output_dir(output_dir, exe_name=None):
                 shutil.rmtree(item_path)
             else:
                 os.remove(item_path)
-    logger.info("Diretório de saída limpo.")
+    logger.info('Diretório de saída limpo.')
 
 
 def prepare_pyx(source_file, pyx_file):
     """Cria um arquivo .pyx a partir de um script Python."""
-    print("@@", source_file)
+    print('@@', source_file)
     try:
         shutil.copy(source_file, pyx_file)
-        logger.info(f"Arquivo .pyx gerado: {pyx_file}")
+        logger.info(f'Arquivo .pyx gerado: {pyx_file}')
     except Exception as e:
-        logger.error(f"Erro ao criar o arquivo .pyx: {e}")
+        logger.error(f'Erro ao criar o arquivo .pyx: {e}')
         raise
 
 
@@ -54,7 +54,7 @@ def copy_src_files(src_dir, output_dir):
         os.makedirs(output_dir)
 
     for item in os.listdir(src_dir):
-        if item == "core":
+        if item == 'core':
             continue
 
         s = os.path.join(src_dir, item)
@@ -73,17 +73,17 @@ def copy_src_files(src_dir, output_dir):
 def compile_pyx_to_c(pyx_file, output_dir):
     """Compila o arquivo .pyx para C."""
     output_c_file = os.path.join(
-        output_dir, os.path.basename(pyx_file).replace(".pyx", ".c")
+        output_dir, os.path.basename(pyx_file).replace('.pyx', '.c')
     )
-    command = ["cython", "-3", "-o", output_c_file, pyx_file]
-    logger.info(f"Compilando .pyx para .c: {command}")
+    command = ['cython', '-3', '-o', output_c_file, pyx_file]
+    logger.info(f'Compilando .pyx para .c: {command}')
     try:
         subprocess.run(
             command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        logger.info(f"Arquivo .c gerado: {output_c_file}")
+        logger.info(f'Arquivo .c gerado: {output_c_file}')
     except subprocess.CalledProcessError as e:
-        logger.error(f"Erro ao compilar .pyx: {e.stderr.decode()}")
+        logger.error(f'Erro ao compilar .pyx: {e.stderr.decode()}')
         raise
 
 
@@ -91,98 +91,107 @@ def compile_all_src_files(src_dir, output_dir):
     """Compila todos os arquivos Python em src_dir para arquivos .pyx e depois para .c."""
     for root, dirs, files in os.walk(src_dir):
         for file in files:
-            if file.endswith(".py"):
+            if file.endswith('.py'):
                 py_file = os.path.join(root, file)
-                pyx_file = os.path.join(output_dir, f"{os.path.splitext(file)[0]}.pyx")
+                pyx_file = os.path.join(
+                    output_dir, f'{os.path.splitext(file)[0]}.pyx'
+                )
                 prepare_pyx(py_file, pyx_file)
                 compile_pyx_to_c(pyx_file, output_dir)
 
 
-def build_executable(platform, script_path, output_dir, icon_path, compile_all=False):
+def build_executable(
+    platform, script_path, output_dir, icon_path, compile_all=False
+):
     """Função para compilar o projeto em um executável para o sistema especificado."""
     project_dir = os.path.dirname(os.path.abspath(__file__))
-    logger.info(f"Projeto localizado em: {project_dir}")
+    logger.info(f'Projeto localizado em: {project_dir}')
 
-    output_dir = os.path.join(project_dir, "..", "dist")
-    logger.info(f"Diretório de saída: {output_dir}")
+    output_dir = os.path.join(project_dir, '..', 'dist')
+    logger.info(f'Diretório de saída: {output_dir}')
 
     ensure_dir_exists(output_dir)
 
-    script_name = os.path.join(project_dir, "..", "src", "core", "main.py")
-    logger.info(f"Script principal: {script_name}")
+    script_name = os.path.join(project_dir, '..', 'src', 'core', 'main.py')
+    logger.info(f'Script principal: {script_name}')
 
     icon_path = os.path.join(
-        project_dir, "..", "src", "assets", "images", "icons", "orange.ico"
+        project_dir, '..', 'src', 'assets', 'images', 'icons', 'orange.ico'
     )
 
-    logger.info(f"Ícone do aplicativo: {icon_path}")
+    logger.info(f'Ícone do aplicativo: {icon_path}')
 
-    src_dir = os.path.join(project_dir, "..", "src")
-    logger.info(f"Diretório src: {src_dir}")
+    src_dir = os.path.join(project_dir, '..', 'src')
+    logger.info(f'Diretório src: {src_dir}')
 
     if compile_all:
         compile_all_src_files(src_dir, output_dir)
     else:
-        pyx_file = os.path.join(src_dir, "core", "main.py")
-        prepare_pyx(pyx_file, os.path.join(output_dir, "main.pyx"))
-        compile_pyx_to_c(os.path.join(output_dir, "main.pyx"), output_dir)
+        pyx_file = os.path.join(src_dir, 'core', 'main.py')
+        prepare_pyx(pyx_file, os.path.join(output_dir, 'main.pyx'))
+        compile_pyx_to_c(os.path.join(output_dir, 'main.pyx'), output_dir)
 
     copy_src_files(src_dir, output_dir)
 
-    upx_dir = os.path.join(project_dir, "upx")
+    upx_dir = os.path.join(project_dir, 'upx')
 
     command = [
-        "pyinstaller",
-        "--onefile",
-        "--noconsole",
-        "--hidden-import=config",
-        "--hidden-import=PyQt6",
-        "--hidden-import=PIL",
-        "--hidden-import=PIL.Image",
-        "--hidden-import=PIL.ImageQt",
-        f"--add-data={output_dir}{os.pathsep}.",
-        "--distpath",
+        'pyinstaller',
+        '--onefile',
+        '--hidden-import=config',
+        '--hidden-import=PyQt6',
+        '--hidden-import=PIL',
+        '--hidden-import=PIL.Image',
+        '--hidden-import=PIL.ImageQt',
+        f'--add-data={output_dir}{os.pathsep}.',
+        '--distpath',
         output_dir,
-        "--workpath",
-        os.path.join(project_dir, "build"),
-        "--specpath",
-        os.path.join(project_dir, "specs"),
-        "--clean",
-        "--name",
-        "Orange",
+        '--workpath',
+        os.path.join(project_dir, 'build'),
+        '--specpath',
+        os.path.join(project_dir, 'specs'),
+        '--clean',
+        '--name',
+        'Orange',
         script_name,
-        f"--upx-dir={upx_dir}",
+        f'--upx-dir={upx_dir}',
     ]
 
-    if platform in ["windows", "linux"]:
-        command.append(f"--icon={icon_path}")
+    if platform in {'windows', 'linux'}:
+        command.append(f'--icon={icon_path}')
 
-    logger.info(f"Compilando para {platform}...")
+    logger.info(f'Compilando para {platform}...')
 
     try:
         result = subprocess.run(
             command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        logger.info(f"Compilação bem-sucedida: {result.stdout.decode()}")
+        logger.info(f'Compilação bem-sucedida: {result.stdout.decode()}')
     except subprocess.CalledProcessError as e:
         error_message = (
-            e.stderr.decode() if e.stderr else "Nenhuma saída de erro disponível"
+            e.stderr.decode()
+            if e.stderr
+            else 'Nenhuma saída de erro disponível'
         )
-        logger.error(f"Erro durante a compilação: {error_message}")
-        logger.error(f"Código de retorno: {e.returncode}")
+        logger.error(f'Erro durante a compilação: {error_message}')
+        logger.error(f'Código de retorno: {e.returncode}')
         logger.error(
-            f"Saída completa: {e.output.decode() if e.output else 'Sem saída'}"
+            f'Saída completa: {e.output.decode() if e.output else "Sem saída"}'
         )
         sys.exit(1)
 
-    clean_output_dir(output_dir, "Orange.exe" if platform == "windows" else "Orange")
+    clean_output_dir(
+        output_dir, 'Orange.exe' if platform == 'windows' else 'Orange'
+    )
 
-    return os.path.join(output_dir, "Orange.exe" if platform == "windows" else "Orange")
+    return os.path.join(
+        output_dir, 'Orange.exe' if platform == 'windows' else 'Orange'
+    )
 
 
 def compact_output(output_dir, zip_path):
     """Compacta o conteúdo do diretório de saída em um arquivo ZIP."""
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(output_dir):
             for file in files:
                 file_path = os.path.join(root, file)
@@ -192,104 +201,116 @@ def compact_output(output_dir, zip_path):
                 arcname = os.path.relpath(file_path, output_dir)
                 zipf.write(file_path, arcname)
 
-    logger.info(f"Projeto compactado em: {zip_path}")
+    logger.info(f'Projeto compactado em: {zip_path}')
 
 
 def upload_to_github_release(file_path, tag, release_name, repo, platform):
     """Faz upload de um arquivo para o release do GitHub usando o CLI do GitHub."""
-    logger.info(f"Enviando {file_path} para o release do GitHub...")
+    logger.info(f'Enviando {file_path} para o release do GitHub...')
     try:
         subprocess.run(
             [
-                "gh",
-                "release",
-                "create",
+                'gh',
+                'release',
+                'create',
                 tag,
                 file_path,
-                "--repo",
+                '--repo',
                 repo,
-                "--title",
+                '--title',
                 release_name,
-                "--notes",
-                f"Release {release_name} Platform: {platform}",
+                '--notes',
+                f'Release {release_name} Platform: {platform}',
             ],
             check=True,
         )
-        logger.info("Upload concluído com sucesso.")
+        logger.info('Upload concluído com sucesso.')
     except subprocess.CalledProcessError as e:
-        logger.error("Erro ao enviar para o GitHub Release:", e)
+        logger.error('Erro ao enviar para o GitHub Release: %s', e)
         sys.exit(1)
 
 
-def commit_and_push_changes(repo, tag, commit_message="Atualização do build com src"):
+def commit_and_push_changes(
+    repo, tag, commit_message='Atualização do build com src'
+):
     """Faz commit e push das alterações no repositório Git."""
     try:
         # subprocess.run(["git", "remote", "set-url", "origin", repo], check=True)
-        logger.info(f"Repositório remoto configurado para: {repo}")
+        logger.info(f'Repositório remoto configurado para: {repo}')
 
-        subprocess.run(["git", "add", "."], check=True)
+        subprocess.run(['git', 'add', '.'], check=True)
 
-        subprocess.run(["git", "commit", "-m", commit_message], check=True)
+        subprocess.run(['git', 'commit', '-m', commit_message], check=True)
 
-        subprocess.run(["git", "push", "origin", "main"], check=True)
+        subprocess.run(['git', 'push', 'origin', 'main'], check=True)
 
         logger.info(
-            "Alterações comprometidas e enviadas para o repositório com sucesso."
+            'Alterações comprometidas e enviadas para o repositório com sucesso.'
         )
     except subprocess.CalledProcessError as e:
-        logger.error("Erro ao fazer commit ou push no repositório Git:", e)
+        logger.error('Erro ao fazer commit ou push no repositório Git: %s', e)
         sys.exit(1)
 
 
 def main():
     if len(sys.argv) < 3:
         logger.error(
-            "Uso: python build.py <platform> <tag> [repo] [--compile-all] [--no-upload]"
+            'Uso: python build.py <platform> <tag> [repo] [--compile-all] [--no-upload]'
         )
-        logger.error("Plataformas: windows, linux")
-        logger.error("[repo]: Repositório GitHub para upload.")
-        logger.error("[--compile-all]: Compilar todos os arquivos Python.")
-        logger.error("[--no-upload]: Pular upload para GitHub Release (útil para testes).")
+        logger.error('Plataformas: windows, linux')
+        logger.error('[repo]: Repositório GitHub para upload.')
+        logger.error('[--compile-all]: Compilar todos os arquivos Python.')
+        logger.error(
+            '[--no-upload]: Pular upload para GitHub Release (útil para testes).'
+        )
         sys.exit(1)
 
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
     if len(args) < 2:
-        logger.error("Argumentos insuficientes: informe plataforma e tag.")
+        logger.error('Argumentos insuficientes: informe plataforma e tag.')
         sys.exit(1)
 
     platform = args[0].lower()
     tag = args[1]
-    repo = args[2] if len(args) > 2 else "eusouanderson/orange"
+    repo = args[2] if len(args) > 2 else 'eusouanderson/orange'
 
-    compile_all = "--compile-all" in sys.argv
-    skip_upload = "--no-upload" in sys.argv
+    compile_all = '--compile-all' in sys.argv
+    skip_upload = '--no-upload' in sys.argv
 
-    if platform not in ["windows", "linux"]:
-        logger.error("Plataforma inválida. Escolha entre 'windows' ou 'linux'.")
+    if platform not in {'windows', 'linux'}:
+        logger.error(
+            "Plataforma inválida. Escolha entre 'windows' ou 'linux'."
+        )
         sys.exit(1)
 
     project_dir = os.path.abspath(os.path.dirname(__file__))
-    output_dir = "dist"
-    script_path = os.path.join(project_dir, "src", "core", "main.py")
+    output_dir = 'dist'
+    script_path = os.path.join(project_dir, 'src', 'core', 'main.py')
     icon_path = os.path.join(
-        project_dir, "src", "assets", "images", "icons", "orange.ico"
+        project_dir, 'src', 'assets', 'images', 'icons', 'orange.ico'
     )
-    zip_path = os.path.join(output_dir, f"Orange-{tag}.zip")
+    zip_path = os.path.join(output_dir, f'Orange-{tag}.zip')
 
     try:
         clean_output_dir(output_dir)
-        build_executable(platform, script_path, output_dir, icon_path, compile_all)
+        build_executable(
+            platform, script_path, output_dir, icon_path, compile_all
+        )
         compact_output(output_dir, zip_path)
 
         if skip_upload:
-            logger.info("Upload pulado (--no-upload). Artefato pronto em dist/.")
+            logger.info(
+                'Upload pulado (--no-upload). Artefato pronto em dist/.'
+            )
         else:
-            upload_to_github_release(zip_path, tag, f"Orange {tag}", repo, platform)
+            upload_to_github_release(
+                zip_path, tag, f'Orange {tag}', repo, platform
+            )
     except subprocess.CalledProcessError as e:
-        logger.error("Erro ao executar subprocesso: %s", e.stderr.decode())
+        logger.error('Erro ao executar subprocesso: %s', e.stderr.decode())
     except Exception as e:
-        logger.error("Erro durante a execução: %s", str(e))
+        logger.error('Erro durante a execução: %s', str(e))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

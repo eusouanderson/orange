@@ -7,8 +7,8 @@ def test_converter_unidade_mm_para_cm(qapp):
     """Testa conversão de 10mm para cm (deve ser 1cm)."""
     calc = Calc3D()
     calc.spin_valor.setValue(10)
-    calc.combo_de.setCurrentText("mm")
-    calc.combo_para.setCurrentText("cm")
+    calc.combo_de.setCurrentText('mm')
+    calc.combo_para.setCurrentText('cm')
     calc._converter_unidade()
     resultado = float(calc.label_resultado_unidade.text())
     assert abs(resultado - 1.0) < 0.0001
@@ -18,8 +18,8 @@ def test_converter_unidade_polegadas_para_mm(qapp):
     """Testa conversão de polegadas para mm."""
     calc = Calc3D()
     calc.spin_valor.setValue(1)  # 1 polegada
-    calc.combo_de.setCurrentText("in")
-    calc.combo_para.setCurrentText("mm")
+    calc.combo_de.setCurrentText('in')
+    calc.combo_para.setCurrentText('mm')
     calc._converter_unidade()
     resultado = float(calc.label_resultado_unidade.text())
     assert abs(resultado - 25.4) < 0.0001  # 1 polegada = 25.4 mm
@@ -157,24 +157,24 @@ def test_adicionar_historico(qapp):
     """Testa adição de item ao histórico."""
     calc = Calc3D()
     initial_rows = calc.table_historico.rowCount()
-    
-    calc._adicionar_historico("Teste Operação", "123.45")
-    
+
+    calc._adicionar_historico('Teste Operação', '123.45')
+
     assert calc.table_historico.rowCount() == initial_rows + 1
     # Verifica última linha
     last_row = calc.table_historico.rowCount() - 1
-    assert calc.table_historico.item(last_row, 1).text() == "Teste Operação"
-    assert calc.table_historico.item(last_row, 2).text() == "123.45"
+    assert calc.table_historico.item(last_row, 1).text() == 'Teste Operação'
+    assert calc.table_historico.item(last_row, 2).text() == '123.45'
 
 
 def test_limpar_historico(qapp):
     """Testa limpeza do histórico."""
     calc = Calc3D()
-    calc._adicionar_historico("Op 1", "100")
-    calc._adicionar_historico("Op 2", "200")
-    
+    calc._adicionar_historico('Op 1', '100')
+    calc._adicionar_historico('Op 2', '200')
+
     assert calc.table_historico.rowCount() > 0
-    
+
     calc._limpar_historico()
-    
+
     assert calc.table_historico.rowCount() == 0

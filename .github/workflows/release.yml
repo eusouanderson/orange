@@ -1,0 +1,90 @@
+name: Release Automation
+
+"on":
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release-artifacts:
+    name: Build Release on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: Orange-linux-x86_64
+          - os: windows-latest
+            artifact_name: Orange-windows-x86_64
+          - os: macos-latest
+            artifact_name: Orange-macos-x86_64
+
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Build Executável com Orange Action
+        uses: ./
+        with:
+          source: ./src
+          output: ./dist
+          profile: production
+          compile-all: true
+          python-version: '3.12'
+          orange-version: 'local'
+          cache: true
+          upload-artifact: false
+
+      - name: Compactar Artefatos (Linux / macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd dist
+          tar -czvf ../${{ matrix.artifact_name }}.tar.gz *
+
+      - name: Compactar Artefatos (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cd dist
+          tar.exe -czvf ../${{ matrix.artifact_name }}.tar.gz *
+
+      - name: Upload de Artefato de Release para o Job
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}.tar.gz
+
+  create-github-release:
+    name: Create GitHub Release
+    needs: build-release-artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Baixar Todos os Artefatos
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Organizar Arquivos para Publicação
+        run: |
+          mkdir -p release-files
+          find release-artifacts -name "*.tar.gz" -exec cp {} release-files/ \;
+          ls -la release-files/
+
+      - name: Gerar Release no GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-files/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          name: Release ${{ github.ref_name }}

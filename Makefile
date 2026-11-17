@@ -29,6 +29,14 @@ test:
 	@echo "Rodando TODOS os testes (framework + application)..."
 	poetry run pytest
 
+test-fast:
+	@echo "Rodando testes rápidos (sem benchmarks longos)..."
+	poetry run pytest -k "not test_performance"
+
+test-core:
+	@echo "Rodando testes dos módulos do Orange Core (config, compiler, builder, cache, cli)..."
+	poetry run pytest tests/builder/ tests/cache/ tests/cli/ tests/compiler/ tests/config/ tests/platform/ tests/plugins/ tests/reports/
+
 test-framework:
 	@echo "Rodando testes do Framework (build, watch, compilação)..."
 	poetry run pytest tests/framework/

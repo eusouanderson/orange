@@ -1,0 +1,54 @@
+name: Reusable Orange Build Workflow
+
+"on":
+  workflow_call:
+    inputs:
+      source:
+        description: 'Diretório de código-fonte'
+        required: false
+        type: string
+        default: './src'
+      output:
+        description: 'Diretório de saída'
+        required: false
+        type: string
+        default: './dist'
+      profile:
+        description: 'Perfil de compilação'
+        required: false
+        type: string
+        default: 'production'
+      compile-all:
+        description: 'Compilar todas as fontes para C'
+        required: false
+        type: boolean
+        default: false
+      python-version:
+        description: 'Versão do Python'
+        required: false
+        type: string
+        default: '3.12'
+      os:
+        description: 'Runner OS (ubuntu-latest, windows-latest, macos-latest)'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+
+jobs:
+  execute-reusable-build:
+    name: Build on ${{ inputs.os }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Build com Orange Action
+        uses: eusouanderson/orange@main
+        with:
+          source: ${{ inputs.source }}
+          output: ${{ inputs.output }}
+          profile: ${{ inputs.profile }}
+          compile-all: ${{ inputs.compile-all }}
+          python-version: ${{ inputs.python-version }}
+          cache: true
+          upload-artifact: true
