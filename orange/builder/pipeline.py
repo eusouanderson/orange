@@ -15,6 +15,7 @@ from orange.models import BuildResult, OrangeConfig, StepReport
 from orange.optimizer.upx import UPXOptimizer
 from orange.packager.pyinstaller import PyInstallerPackager
 from orange.platform.detector import PlatformInfo, PlatformManager
+from orange.plugins.base import default_registry
 from orange.reports.generator import ReportGenerator
 
 
@@ -65,6 +66,9 @@ class BuildPipeline:
             else 'none',
             optimizer_used='upx' if self.config.packaging.upx else 'none',
         )
+
+        # Dispara hooks de plugins pré-build
+        default_registry.run_pre_build(self.config)
 
         try:
             # 1. Pré-checagem e Limpeza
@@ -331,5 +335,8 @@ class BuildPipeline:
                         rep_dir / 'build_report.html',
                     )
                     result.report_files.append(p)
+
+        # Dispara hooks de plugins pós-build
+        default_registry.run_post_build(result)
 
         return result

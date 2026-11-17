@@ -1,10 +1,24 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
+  # Serviço para compilar o executável no container e gravá-lo no host (./dist)
+  orange-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: orange-compiler
     volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    command: python src/test.py
+      - ./dist:/app/dist
+      - ./.orange/cache:/app/.orange/cache
+    command: ["orange", "build", "--profile", "production", "--clean"]
+
+  # Serviço para executar a imagem mínima com o aplicativo compilado
+  orange-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: orange-runtime
+    environment:
+      - QT_QPA_PLATFORM=offscreen

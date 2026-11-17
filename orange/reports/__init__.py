@@ -1,5 +1,6 @@
-"""Módulo de relatórios e métricas do Orange Framework."""
+"""Módulo de relatórios, métricas e comparadores do Orange Framework."""
 
+from orange.reports.comparator import BuildComparator, MetricDiff
 from orange.reports.generator import ReportGenerator
 
-__all__ = ['ReportGenerator']
+__all__ = ['BuildComparator', 'MetricDiff', 'ReportGenerator']

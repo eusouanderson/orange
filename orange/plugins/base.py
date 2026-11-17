@@ -101,6 +101,28 @@ class PluginRegistry:
         """Retorna todos os plugins registrados."""
         return list(self._plugins.values())
 
+    def get_hooks(self) -> list[BaseHookPlugin]:
+        """Retorna todos os plugins registrados que implementam BaseHookPlugin."""
+        return [
+            p for p in self._plugins.values() if isinstance(p, BaseHookPlugin)
+        ]
+
+    def run_pre_build(self, config: OrangeConfig) -> None:
+        """Executa os hooks pre_build de todos os plugins registrados."""
+        for hook in self.get_hooks():
+            try:
+                hook.pre_build(config)
+            except Exception:
+                pass
+
+    def run_post_build(self, result: BuildResult) -> None:
+        """Executa os hooks post_build de todos os plugins registrados."""
+        for hook in self.get_hooks():
+            try:
+                hook.post_build(result)
+            except Exception:
+                pass
+
 
 # Instância global do registro de plugins
 default_registry = PluginRegistry()

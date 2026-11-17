@@ -9,13 +9,15 @@ from orange.plugins.base import (
     PluginRegistry,
     default_registry,
 )
+from orange.plugins.loader import PluginLoader
 
 __all__ = [
-    'BasePlugin',
     'BaseCompilerPlugin',
-    'BasePackagerPlugin',
-    'BaseOptimizerPlugin',
     'BaseHookPlugin',
+    'BaseOptimizerPlugin',
+    'BasePackagerPlugin',
+    'BasePlugin',
+    'PluginLoader',
     'PluginRegistry',
     'default_registry',
 ]
