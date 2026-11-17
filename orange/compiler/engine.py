@@ -113,7 +113,7 @@ class CythonCompiler:
             self.system == 'windows' and shutil.which('cl')
         ):
             # Compilador Microsoft Visual C++
-            libs_dir = sysconfig.get_path('platstdlib')
+            libs_dir = Path(sys.base_prefix) / 'libs'
             cl_cmd = [
                 'cl',
                 '/nologo',
@@ -126,6 +126,26 @@ class CythonCompiler:
                 f'/LIBPATH:{libs_dir}',
             ] + extra
             cmd = cl_cmd
+        elif self.system == 'windows':
+            # Windows com MinGW / GCC / Clang
+            cc = shutil.which('gcc') or shutil.which('clang') or 'gcc'
+            libs_dir = Path(sys.base_prefix) / 'libs'
+            py_ver = f'{sys.version_info.major}{sys.version_info.minor}'
+            lib_file = libs_dir / f'python{py_ver}.lib'
+            cmd = [
+                cc,
+                '-shared',
+                opt_flag,
+                f'-I{include_dir}',
+                '-o',
+                str(output_so_file),
+                str(c_file),
+            ]
+            if lib_file.exists():
+                cmd.append(str(lib_file))
+            elif libs_dir.exists():
+                cmd.extend([f'-L{libs_dir}', f'-lpython{py_ver}'])
+            cmd.extend(extra)
         elif self.system == 'macos':
             # Apple Clang
             cmd = [
