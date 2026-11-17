@@ -10,7 +10,7 @@ from orange.compiler.engine import CythonCompiler
 def test_cython_transpilation_and_c_compilation():
     compiler = CythonCompiler()
 
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         src = Path(tmp) / 'math_util.py'
         src.write_text(
             'def multiply(a: int, b: int) -> int:\n    return a * b\n',
@@ -43,7 +43,7 @@ def test_cython_transpilation_and_c_compilation():
 def test_compile_project():
     compiler = CythonCompiler()
 
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         src_dir = Path(tmp) / 'src'
         src_dir.mkdir()
         (src_dir / 'mod_a.py').write_text(
