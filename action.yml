@@ -136,9 +136,9 @@ runs:
         orange build $FLAGS
         echo "build-status=success" >> $GITHUB_OUTPUT
         if [ "$RUNNER_OS" = "Windows" ]; then
-          EXE=$(find ${{ inputs.output }} -maxdepth 2 -name "*.exe" | head -n 1)
+          EXE=$(python -c "from pathlib import Path; print(next((str(p) for p in Path('${{ inputs.output }}').rglob('*.exe') if p.is_file()), ''))")
         else
-          EXE=$(find ${{ inputs.output }} -maxdepth 2 -type f -executable ! -name "*.json" ! -name "*.html" | head -n 1)
+          EXE=$(python3 -c "import os; from pathlib import Path; ignored={'.json','.html','.zip','.gz','.whl','.txt','.spec'}; print(next((str(p) for p in Path('${{ inputs.output }}').rglob('*') if p.is_file() and p.suffix.lower() not in ignored and os.access(p, os.X_OK)), ''))" 2>/dev/null || python -c "import os; from pathlib import Path; ignored={'.json','.html','.zip','.gz','.whl','.txt','.spec'}; print(next((str(p) for p in Path('${{ inputs.output }}').rglob('*') if p.is_file() and p.suffix.lower() not in ignored and os.access(p, os.X_OK)), ''))")
         fi
         echo "executable-path=$EXE" >> $GITHUB_OUTPUT
 
