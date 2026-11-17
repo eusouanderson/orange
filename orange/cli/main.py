@@ -119,6 +119,13 @@ def cli(
 # =====================================================================
 @cli.command()
 @click.option(
+    '--config',
+    '-c',
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help='Caminho alternativo para o arquivo orange.toml.',
+)
+@click.option(
     '--profile',
     '-p',
     type=str,
@@ -164,6 +171,7 @@ def cli(
 @click.pass_context
 def build(
     ctx: click.Context,
+    config: Path | None,
     profile: str | None,
     platform: str | None,
     compile_all: bool | None,
@@ -175,7 +183,7 @@ def build(
     """Compila e empacota a aplicação Python em binário standalone."""
     verbose = ctx.obj.get('verbose', False)
     quiet = ctx.obj.get('quiet', False)
-    config_path = ctx.obj.get('config_path')
+    config_path = config or ctx.obj.get('config_path')
 
     try:
         mgr = ConfigManager(config_path)
