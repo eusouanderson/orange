@@ -70,6 +70,8 @@ impl HealthCalculator {
             category,
             factors,
             whea_errors_detected: whea_errors,
+            thermal_throttling_events: if cpu.thermal_throttled { 1 } else { 0 },
+            power_throttling_events: 0,
         }
     }
 }

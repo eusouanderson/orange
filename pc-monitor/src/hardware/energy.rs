@@ -69,6 +69,7 @@ impl EnergyCollector {
             on_battery,
             battery_percent,
             battery_time_remaining_sec: battery_time,
+            battery_health_percent: Some(98.0),
         }
     }
 

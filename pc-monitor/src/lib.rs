@@ -7,10 +7,12 @@ pub mod config;
 pub mod core;
 pub mod diagnostics;
 pub mod hardware;
+pub mod ui;
 
 pub use config::{AppConfig, ViewMode};
 pub use core::{
     MetricSample, MetricValue, RingBuffer, SensorCategory, SensorProvider, SensorQuality,
     SensorStatus, SystemSnapshot, TelemetryEngine, Unit,
 };
-pub use diagnostics::{HealthCalculator, ProcessCollector};
+pub use diagnostics::{AlertManager, HealthCalculator, ProcessCollector, StabilityCollector};
+pub use ui::{HudViewMode, OrangeHudApp, Theme};

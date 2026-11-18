@@ -38,6 +38,9 @@ impl ProcessCollector {
                     cpu_percent: proc.cpu_usage(),
                     memory_bytes: mem,
                     memory_percent: mem_percent,
+                    disk_read_bytes_sec: 0,
+                    disk_write_bytes_sec: 0,
+                    threads: 1,
                 }
             })
             .collect();

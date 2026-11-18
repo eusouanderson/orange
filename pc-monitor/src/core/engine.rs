@@ -3,7 +3,7 @@
 use super::ring_buffer::RingBuffer;
 use super::snapshot::SystemSnapshot;
 use crate::config::AppConfig;
-use crate::diagnostics::{HealthCalculator, ProcessCollector};
+use crate::diagnostics::{AlertManager, HealthCalculator, ProcessCollector, StabilityCollector};
 use crate::hardware::{
     CpuCollector, EnergyCollector, GpuCollector, MemoryCollector, NetworkCollector,
     StorageCollector,
@@ -91,6 +91,8 @@ impl TelemetryEngine {
                 let mut energy_col = EnergyCollector::new();
                 let mut net_col = NetworkCollector::new();
                 let proc_col = ProcessCollector::new();
+                let mut stability_col = StabilityCollector::new();
+                let mut alert_mgr = AlertManager::new();
                 let mut sys_proc = sysinfo::System::new();
 
                 let mut ticks: u64 = 0;
@@ -107,7 +109,10 @@ impl TelemetryEngine {
                     let gpu_snaps = gpu_col.collect();
                     let net_snap = net_col.collect();
 
-                    // 3. Amostragem lenta (5s): Discos e Processos
+                    // 3. Amostragem de integridade e estabilidade de hardware (WHEA/MCE)
+                    let whea_errors = stability_col.collect_errors();
+
+                    // 4. Amostragem lenta (5s): Discos e Processos
                     let storage_snaps = if ticks % 5 == 0 {
                         storage_col.collect()
                     } else {
@@ -120,7 +125,7 @@ impl TelemetryEngine {
                         snapshot_ref.read().top_processes.clone()
                     };
 
-                    // 4. Energia e Custo
+                    // 5. Energia e Custo
                     let gpu_watts = gpu_snaps.first().and_then(|g| g.power_watts);
                     let energy_snap = energy_col.update(
                         cpu_snap.total_usage_percent,
@@ -129,8 +134,17 @@ impl TelemetryEngine {
                         cost_brl,
                     );
 
-                    // 5. Diagnóstico de Saúde Holística
-                    let health_snap = HealthCalculator::evaluate(&cpu_snap, &mem_snap, 0);
+                    // 6. Diagnóstico de Saúde Holística
+                    let health_snap = HealthCalculator::evaluate(&cpu_snap, &mem_snap, whea_errors);
+
+                    // 7. Avaliação determinística de Alertas Inteligentes
+                    let alerts = alert_mgr
+                        .evaluate_all(
+                            cpu_snap.package_temperature_c,
+                            mem_snap.usage_percent,
+                            whea_errors,
+                        )
+                        .to_vec();
 
                     let timestamp_ms = SystemTime::now()
                         .duration_since(UNIX_EPOCH)
@@ -157,6 +171,7 @@ impl TelemetryEngine {
                         snap.network = net_snap;
                         snap.top_processes = top_procs;
                         snap.health = health_snap;
+                        snap.alerts = alerts;
                     }
 
                     ticks = ticks.wrapping_add(1);

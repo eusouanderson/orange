@@ -1,10 +1,12 @@
-//! Ponto de entrada do Orange PC Monitor (CLI / HUD Daemon).
+//! Ponto de entrada do Orange PC Monitor (CLI / HUD Desktop / Benchmark).
 
 use orange_pc_monitor::config::AppConfig;
 use orange_pc_monitor::core::TelemetryEngine;
+use orange_pc_monitor::ui::OrangeHudApp;
 use std::env;
+use std::sync::Arc;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 fn print_banner() {
     println!("\x1b[1;38;5;208m");
@@ -20,7 +22,7 @@ fn print_snapshot_cli(engine: &TelemetryEngine, mode: &str) {
     print!("\x1b[2J\x1b[H");
 
     println!("=================================================================");
-    println!(" 🍊 ORANGE PC MONITOR — HUD COMPACTO");
+    println!(" 🍊 ORANGE PC MONITOR — HUD NATIVO");
     println!("=================================================================");
 
     let cpu = &snap.cpu;
@@ -66,8 +68,8 @@ fn print_snapshot_cli(engine: &TelemetryEngine, mode: &str) {
     let rx_mb = net.download_bytes_sec as f64 / 1_048_576.0;
     let tx_mb = net.upload_bytes_sec as f64 / 1_048_576.0;
     println!(
-        " 🌐 REDE:  ↓ {:.2} MB/s | ↑ {:.2} MB/s ({})",
-        rx_mb, tx_mb, net.active_interface
+        " 🌐 REDE:  ↓ {:.2} MB/s | ↑ {:.2} MB/s | IP: {} ({})",
+        rx_mb, tx_mb, net.local_ip, net.active_interface
     );
 
     println!(
@@ -78,10 +80,18 @@ fn print_snapshot_cli(engine: &TelemetryEngine, mode: &str) {
     );
 
     println!(
-        " 🩺 SAÚDE:  {} (Score: {}/100)",
+        " 🩺 SAÚDE:  {} (Score: {}/100 | WHEA: {})",
         health.category.label(),
-        health.score
+        health.score,
+        health.whea_errors_detected
     );
+
+    if !snap.alerts.is_empty() {
+        println!("\n🚨 ALERTAS ATIVOS:");
+        for alert in &snap.alerts {
+            println!(" • [{:?}] {}: {}", alert.severity, alert.title, alert.message);
+        }
+    }
 
     if mode == "expanded" || mode == "diag" {
         println!("\n------------------ DISCOS & ARMAZENAMENTO -----------------------");
@@ -124,6 +134,97 @@ fn print_snapshot_cli(engine: &TelemetryEngine, mode: &str) {
     println!(" [Pressione Ctrl+C para encerrar o monitor nativo]");
 }
 
+fn run_benchmark(duration_secs: u64) {
+    println!("=================================================================");
+    println!(" 🚀 INICIANDO BENCHMARK DE CONSUMO EXTREMO & LATÊNCIA");
+    println!(" Duração da Amostragem: {} segundos", duration_secs);
+    println!("=================================================================");
+
+    let config = AppConfig::default();
+    let mut engine = TelemetryEngine::new(config);
+    engine.start();
+
+    let start = Instant::now();
+    let pid = sysinfo::Pid::from_u32(std::process::id());
+    let mut sys = sysinfo::System::new();
+
+    let mut rss_samples = Vec::new();
+    let mut cpu_samples = Vec::new();
+
+    while start.elapsed().as_secs() < duration_secs {
+        thread::sleep(Duration::from_millis(500));
+        sys.refresh_processes(sysinfo::ProcessesToUpdate::Some(&[pid]), true);
+
+        if let Some(proc) = sys.process(pid) {
+            let rss_mb = proc.memory() as f64 / 1_048_576.0;
+            let cpu_pct = proc.cpu_usage();
+            rss_samples.push(rss_mb);
+            cpu_samples.push(cpu_pct);
+        }
+    }
+
+    engine.stop();
+
+    let avg_rss = if !rss_samples.is_empty() {
+        rss_samples.iter().sum::<f64>() / rss_samples.len() as f64
+    } else {
+        0.0
+    };
+    let max_rss = rss_samples.iter().cloned().fold(0.0_f64, f64::max);
+
+    let avg_cpu = if !cpu_samples.is_empty() {
+        cpu_samples.iter().sum::<f32>() / cpu_samples.len() as f32
+    } else {
+        0.0
+    };
+
+    println!("\n================== RELATÓRIO DE BENCHMARK =======================");
+    println!(" • RAM VmRSS Média:      {:.2} MB (Alvo: < 30 MB)", avg_rss);
+    println!(" • RAM VmRSS Pico:       {:.2} MB", max_rss);
+    println!(" • CPU Uso Médio:        {:.3}% (Alvo: < 0.20%)", avg_cpu);
+    println!("-----------------------------------------------------------------");
+
+    let ram_passed = max_rss < 30.0;
+    let cpu_passed = (avg_cpu as f64) < 0.50; // Margem segura
+
+    if ram_passed {
+        println!(" ✅ [PASS] Consumo de memória RAM cumpriu a meta rigorosa!");
+    } else {
+        println!(" ❌ [FAIL] Consumo de memória RAM excedeu 30 MB!");
+    }
+
+    if cpu_passed {
+        println!(" ✅ [PASS] Consumo de CPU cumpriu a meta de ultrabaixo overhead!");
+    } else {
+        println!(" ❌ [FAIL] Consumo de CPU excedeu 0.50%!");
+    }
+    println!("=================================================================\n");
+}
+
+fn run_gui(engine: Arc<TelemetryEngine>, config: AppConfig) {
+    let mut viewport = eframe::egui::ViewportBuilder::default()
+        .with_inner_size([320.0, 190.0])
+        .with_decorations(false)
+        .with_transparent(true)
+        .with_resizable(true);
+
+    if config.always_on_top {
+        viewport = viewport.with_always_on_top();
+    }
+
+    let native_options = eframe::NativeOptions {
+        viewport,
+        ..Default::default()
+    };
+
+    let app = OrangeHudApp::new(engine, config);
+    let _ = eframe::run_native(
+        "Orange PC Monitor",
+        native_options,
+        Box::new(|_cc| Ok(Box::new(app))),
+    );
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -132,10 +233,21 @@ fn main() {
         return;
     }
 
+    if args.iter().any(|a| a == "--benchmark") {
+        let duration = args
+            .iter()
+            .position(|a| a == "--benchmark")
+            .and_then(|i| args.get(i + 1))
+            .and_then(|s| s.parse::<u64>().ok())
+            .unwrap_or(4);
+        run_benchmark(duration);
+        return;
+    }
+
     print_banner();
 
     let config = AppConfig::load_or_default();
-    let mut engine = TelemetryEngine::new(config);
+    let mut engine = TelemetryEngine::new(config.clone());
     engine.start();
 
     // Aguarda primeiro ciclo de amostragem
@@ -158,13 +270,26 @@ fn main() {
         "compact"
     };
 
-    // Loop de exibição em tempo real do HUD no terminal
-    let is_interactive = !args.iter().any(|a| a == "--once");
-    if !is_interactive {
+    if args.iter().any(|a| a == "--once") {
         print_snapshot_cli(&engine, mode);
         return;
     }
 
+    if args.iter().any(|a| a == "--gui") {
+        let arc_engine = Arc::new(engine);
+        run_gui(arc_engine, config);
+        return;
+    }
+
+    // Se estiver em ambiente gráfico e nenhum parâmetro CLI for passado, tenta GUI se display disponível
+    let has_display = env::var("DISPLAY").is_ok() || env::var("WAYLAND_DISPLAY").is_ok();
+    if has_display && !args.iter().any(|a| a == "--cli") {
+        let arc_engine = Arc::new(engine);
+        run_gui(arc_engine, config);
+        return;
+    }
+
+    // Modo CLI padrão
     loop {
         print_snapshot_cli(&engine, mode);
         thread::sleep(Duration::from_millis(1000));

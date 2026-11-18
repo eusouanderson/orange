@@ -52,7 +52,6 @@ def test_monitor_json_telemetry_snapshot(monitor_binary):
     )
     assert res.returncode == 0
 
-    # Localiza o payload JSON (ignora banner inicial se houver)
     json_start = res.stdout.find('{')
     assert json_start != -1, f'JSON não encontrado na saída: {res.stdout}'
 
@@ -78,6 +77,50 @@ def test_monitor_json_telemetry_snapshot(monitor_binary):
     assert isinstance(data['disks'], list)
 
     assert 'network' in data
+    assert 'local_ip' in data['network']
+
+    assert 'alerts' in data
+    assert isinstance(data['alerts'], list)
+
+
+def test_monitor_expanded_cli(monitor_binary):
+    """Valida execução em modo expandido com discos e processos."""
+    res = subprocess.run(
+        [str(monitor_binary), '--once', '--expanded'],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 0
+    assert 'DISCOS & ARMAZENAMENTO' in res.stdout
+    assert 'TOP CONSUMO DE PROCESSOS' in res.stdout
+
+
+def test_monitor_diag_cli(monitor_binary):
+    """Valida execução em modo diagnóstico com fatores de integridade."""
+    res = subprocess.run(
+        [str(monitor_binary), '--once', '--diag'],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 0
+    assert 'FATORES DE DIAGNÓSTICO' in res.stdout
+    assert 'SAÚDE' in res.stdout
+
+
+def test_monitor_benchmark_execution(monitor_binary):
+    """Valida execução do benchmark automatizado de 2 segundos."""
+    res = subprocess.run(
+        [str(monitor_binary), '--benchmark', '2'],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 0
+    assert 'BENCHMARK DE CONSUMO EXTREMO' in res.stdout
+    assert 'RAM VmRSS Média' in res.stdout
+    assert '[PASS]' in res.stdout
 
 
 def test_monitor_memory_footprint_under_30mb(monitor_binary):
@@ -85,7 +128,7 @@ def test_monitor_memory_footprint_under_30mb(monitor_binary):
     import time
 
     proc = subprocess.Popen(
-        [str(monitor_binary)],
+        [str(monitor_binary), '--cli'],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )

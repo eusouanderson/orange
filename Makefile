@@ -3,20 +3,45 @@
 OS := $(shell uname -s)
 
 .DEFAULT_GOAL := help
-.PHONY: help build build-local start test test-framework test-app test-cov test-performance test-fast test-core watch hooks verify lint format
+.PHONY: help build build-local start test test-framework test-app test-cov test-performance test-fast test-core watch hooks verify lint format pc-monitor-build pc-monitor-test pc-monitor-benchmark pc-monitor-run
 
 help:
 	@echo "Orange Framework - Comandos disponíveis:"
-	@echo "  make help             Exibe esta mensagem de ajuda"
-	@echo "  make hooks            Configura e ativa os hooks do Husky no Git"
-	@echo "  make verify           Executa a verificação completa de pré-envio"
-	@echo "  make lint             Executa linter e formatação com Ruff"
-	@echo "  make start            Executa o aplicativo em modo dev"
-	@echo "  make build            Compila e gera executável"
-	@echo "  make test             Executa todos os testes"
-	@echo "  make test-core        Executa testes dos módulos do Orange Core"
-	@echo "  make test-fast        Executa testes rápidos"
-	@echo "  make watch            Inicia watch mode"
+	@echo "  make help                 Exibe esta mensagem de ajuda"
+	@echo "  make hooks                Configura e ativa os hooks do Husky no Git"
+	@echo "  make verify               Executa a verificação completa de pré-envio"
+	@echo "  make lint                 Executa linter e formatação com Ruff"
+	@echo "  make pc-monitor-build     Compila o binário nativo do Orange PC Monitor (Rust)"
+	@echo "  make pc-monitor-test      Executa os testes nativos do PC Monitor"
+	@echo "  make pc-monitor-benchmark Executa o benchmark de consumo extremo de RAM/CPU"
+	@echo "  make pc-monitor-run       Executa o HUD desktop flutuante"
+	@echo "  make start                Executa o aplicativo em modo dev"
+	@echo "  make build                Compila e gera executável"
+	@echo "  make test                 Executa todos os testes"
+	@echo "  make test-core            Executa testes dos módulos do Orange Core"
+	@echo "  make test-fast            Executa testes rápidos"
+	@echo "  make watch                Inicia watch mode"
+
+CARGO ?= $(shell which cargo 2>/dev/null || echo $(HOME)/.cargo/bin/cargo)
+
+pc-monitor-build:
+	@echo "Compilando Orange PC Monitor em modo release..."
+	@cd pc-monitor && $(CARGO) build --release
+	@mkdir -p dist
+	@cp pc-monitor/target/release/orange-pc-monitor dist/
+	@echo "✅ Binário pronto em dist/orange-pc-monitor"
+
+pc-monitor-test:
+	@echo "Executando testes unitários nativos do PC Monitor..."
+	@cd pc-monitor && $(CARGO) test
+	@poetry run pytest tests/pc_monitor/
+	@echo "✅ Todos os testes do PC Monitor passaram!"
+
+pc-monitor-benchmark:
+	@cd pc-monitor && $(CARGO) run --release -- --benchmark 5
+
+pc-monitor-run:
+	@./dist/orange-pc-monitor
 
 hooks:
 	@echo "Configurando hooks do Husky no Git..."
