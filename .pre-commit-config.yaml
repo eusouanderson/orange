@@ -1,0 +1,17 @@
+# Configuração do framework pre-commit para o repositório Orange
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: orange-domain-tests-validation
+        name: Validação de Testes por Domínio
+        entry: python3 scripts/verify_repo.py --quick
+        language: system
+        pass_filenames: false
+        always_run: true
