@@ -240,11 +240,12 @@ class BuildPipeline:
                     )
                 )
 
-            # 5. Otimização UPX pós-build (se onefile não aplicou UPX embutido ou se for standalone)
+            # 5. Otimização UPX pós-build (para distribuições onedir/binários standalone; onefile é gerenciado internamente pelo PyInstaller)
             t0 = time.perf_counter()
             if (
                 self.config.packaging.upx
                 and final_executable
+                and not self.config.packaging.onefile
                 and self.optimizer.is_available()
             ):
                 # Tenta compressão direta se o arquivo for comprimível
@@ -259,7 +260,7 @@ class BuildPipeline:
                         )
                     )
                 except Exception:
-                    # Se já foi comprimido pelo PyInstaller ou não aplicável, registra como concluído
+                    # Se falhar ou não for aplicável, registra como concluído
                     steps.append(
                         StepReport(
                             'upx_optimization',
@@ -268,6 +269,15 @@ class BuildPipeline:
                             'Processado via PyInstaller/UPX',
                         )
                     )
+            elif self.config.packaging.upx and self.config.packaging.onefile:
+                steps.append(
+                    StepReport(
+                        'upx_optimization',
+                        time.perf_counter() - t0,
+                        'success',
+                        'Processado via PyInstaller/UPX embutido',
+                    )
+                )
             else:
                 steps.append(
                     StepReport(

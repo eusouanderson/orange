@@ -29,6 +29,7 @@ class UPXOptimizer:
         compression_level: str = '--best',
         use_lzma: bool = False,
         backup: bool = False,
+        timeout: int = 60,
     ) -> dict[str, Any]:
         """Comprime o executável especificado usando UPX."""
         if not executable_path.exists():
@@ -60,7 +61,11 @@ class UPXOptimizer:
         start_time = time.perf_counter()
         try:
             res = subprocess.run(
-                cmd, capture_output=True, text=True, check=True
+                cmd,
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=timeout,
             )
             duration = time.perf_counter() - start_time
             after_size = executable_path.stat().st_size
@@ -80,6 +85,11 @@ class UPXOptimizer:
                 'duration_seconds': round(duration, 3),
                 'output': res.stdout,
             }
+        except subprocess.TimeoutExpired as e:
+            raise OptimizationError(
+                f"Tempo limite ({timeout}s) excedido durante a compressão UPX do arquivo '{executable_path.name}'",
+                details=str(e),
+            )
         except subprocess.CalledProcessError as e:
             raise OptimizationError(
                 f"Erro durante a compressão UPX do arquivo '{executable_path.name}': {e.stderr}",
