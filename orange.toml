@@ -1,0 +1,63 @@
+# =====================================================================
+# Orange Framework - Arquivo de Configuração Central (orange.toml)
+# Documentação: https://github.com/eusouanderson/orange
+# =====================================================================
+
+[project]
+name = "Orange"
+version = "0.1.148"
+source = "./src"
+entrypoint = "./src/core/main.py"
+description = "Orange Framework - Compilação, Otimização e Distribuição Standalone"
+authors = ["Anderson Rodrigues <eusouanderson@outlook.com>"]
+
+[build]
+profile = "production"
+compile_all = false
+clean = true
+output = "./dist"
+
+[compiler]
+cython = true
+optimization = 2
+c_compiler = "auto"
+language_level = 3
+type_hints = true
+extra_cflags = []
+
+[packaging]
+pyinstaller = true
+onefile = true
+upx = true
+console = true
+icon = "./src/assets/images/icons/orange.ico"
+hidden_imports = ["config", "PyQt6", "PIL", "PIL.Image", "PIL.ImageQt"]
+add_data = []
+
+[cache]
+enabled = true
+directory = ".orange/cache"
+
+[reports]
+enabled = true
+format = ["json", "html"]
+output_dir = "./dist/reports"
+
+[platforms]
+linux = true
+windows = true
+macos = true
+
+# =====================================================================
+# Perfis Personalizados
+# =====================================================================
+[profile.quick]
+compiler.optimization = 1
+packaging.upx = false
+build.clean = false
+
+[profile.debug]
+compiler.optimization = 0
+packaging.upx = false
+packaging.console = true
+build.clean = false

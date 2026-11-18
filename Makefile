@@ -2,7 +2,18 @@
 
 OS := $(shell uname -s)
 
-.PHONY: build build-local start test test-framework test-app test-cov test-performance watch
+.DEFAULT_GOAL := help
+.PHONY: help build build-local start test test-framework test-app test-cov test-performance test-fast test-core watch
+
+help:
+	@echo "Orange Framework - Comandos disponíveis:"
+	@echo "  make help             Exibe esta mensagem de ajuda"
+	@echo "  make start            Executa o aplicativo em modo dev"
+	@echo "  make build            Compila e gera executável"
+	@echo "  make test             Executa todos os testes"
+	@echo "  make test-core        Executa testes dos módulos do Orange Core"
+	@echo "  make test-fast        Executa testes rápidos"
+	@echo "  make watch            Inicia watch mode"
 
 # Valores padrão podem ser sobrescritos na linha de comando, ex:
 # make build TAG=v1.2.3 FLAGS="--compile-all"
@@ -28,6 +39,14 @@ watch:
 test:
 	@echo "Rodando TODOS os testes (framework + application)..."
 	poetry run pytest
+
+test-fast:
+	@echo "Rodando testes rápidos (sem benchmarks longos)..."
+	poetry run pytest -k "not test_performance"
+
+test-core:
+	@echo "Rodando testes dos módulos do Orange Core (config, compiler, builder, cache, cli)..."
+	poetry run pytest tests/builder/ tests/cache/ tests/cli/ tests/compiler/ tests/config/ tests/platform/ tests/plugins/ tests/reports/
 
 test-framework:
 	@echo "Rodando testes do Framework (build, watch, compilação)..."

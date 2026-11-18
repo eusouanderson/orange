@@ -1,36 +1,141 @@
-import math
+import os
+import re
+import shutil
 import sys
-from datetime import datetime
 
-from PyQt6.QtCore import Qt
+try:
+    from icon_processor import run_batch
+except ImportError:
+    try:
+        from src.core.icon_processor import run_batch
+    except ImportError:
+        from .icon_processor import run_batch
+
+try:
+    from src.core.calc3d import Calc3D
+except ImportError:
+    try:
+        from calc3d import Calc3D
+    except ImportError:
+        Calc3D = None  # type: ignore
+
+__all__ = ['Calc3D', 'TextureViewer', 'normalizar_path', 'run_batch']
+
+from PIL import Image
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QIcon, QImage, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
-    QDoubleSpinBox,
-    QGroupBox,
+    QFileDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMainWindow,
+    QMessageBox,
     QPushButton,
-    QSpinBox,
-    QTableWidget,
-    QTableWidgetItem,
-    QTextEdit,
+    QScrollArea,
+    QSplitter,
     QVBoxLayout,
     QWidget,
 )
 
+IMAGE_EXTENSIONS = {
+    '.dds',
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.bmp',
+    '.tga',
+    '.gif',
+    '.tiff',
+}
 
-class Calc3D(QMainWindow):
-    """Calculadora 3D para desenvolvimento em FreeCAD e engenharia."""
 
+def pil_to_pixmap(pil_img: Image.Image) -> QPixmap:
+    if pil_img.mode == 'RGBA':
+        qimg = QImage(
+            pil_img.tobytes(),
+            pil_img.width,
+            pil_img.height,
+            QImage.Format.Format_RGBA8888,
+        )
+    else:
+        pil_img = pil_img.convert('RGB')
+        qimg = QImage(
+            pil_img.tobytes(),
+            pil_img.width,
+            pil_img.height,
+            QImage.Format.Format_RGB888,
+        )
+    return QPixmap.fromImage(qimg)
+
+
+def normalizar_path(path: str) -> str:
+    if re.match(r'^[A-Za-z]:\\', path):
+        drive = path[0].lower()
+        rest = path[2:].replace('\\', '/')
+        return f'/mnt/{drive}{rest}'
+    if re.match(r'^[A-Za-z]:/', path):
+        drive = path[0].lower()
+        rest = path[2:]
+        return f'/mnt/{drive}{rest}'
+    return path
+
+
+def listar_drives_wsl() -> list[str]:
+    drives = []
+    if os.path.isdir('/mnt'):
+        for d in sorted(os.listdir('/mnt')):
+            if len(d) == 1 and d.isalpha() and os.path.isdir(f'/mnt/{d}'):
+                drives.append(f'/mnt/{d}')
+    return drives
+
+
+def fs25_mods_paths_wsl() -> list[str]:
+    candidates = []
+    for drive in listar_drives_wsl():
+        for user_dir in ['Users', 'Usuários']:
+            base = os.path.join(drive, user_dir)
+            if not os.path.isdir(base):
+                continue
+            for username in os.listdir(base):
+                doc = os.path.join(
+                    drive,
+                    user_dir,
+                    username,
+                    'Documents',
+                    'My Games',
+                    'FarmingSimulator2025',
+                    'mods',
+                )
+                alt_doc = os.path.join(
+                    drive,
+                    user_dir,
+                    username,
+                    'Documentos',
+                    'My Games',
+                    'FarmingSimulator2025',
+                    'mods',
+                )
+                for p in [doc, alt_doc]:
+                    if os.path.isdir(p):
+                        candidates.append(p)
+    return candidates
+
+
+class TextureViewer(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Calc3D • FreeCAD Calculator")
+        self.setWindowTitle('Mod Texture Viewer')
         self.resize(1400, 900)
 
-        self.historico = []
+        self.mod_path: str | None = None
+        self.texture_files: list[str] = []
+        self.current_texture: str | None = None
+
         self._build_ui()
         self._aplicar_tema()
 
@@ -40,348 +145,438 @@ class Calc3D(QMainWindow):
         root = QVBoxLayout()
         central.setLayout(root)
 
-        # --- Conversão de Unidades ---
-        group_unidades = QGroupBox("Conversão de Unidades")
-        layout_unidades = QHBoxLayout()
+        toolbar = QHBoxLayout()
+        btn_open = QPushButton('Abrir Mod ZIP')
+        btn_open.clicked.connect(self._abrir_mod)
+        toolbar.addWidget(btn_open)
 
-        self.spin_valor = QDoubleSpinBox()
-        self.spin_valor.setRange(-999999, 999999)
-        self.spin_valor.setDecimals(4)
-        self.spin_valor.setValue(10.0)
+        btn_open_dir = QPushButton('Abrir Pasta')
+        btn_open_dir.clicked.connect(self._abrir_pasta)
+        toolbar.addWidget(btn_open_dir)
 
-        self.combo_de = QComboBox()
-        self.combo_de.addItems(["mm", "cm", "m", "in", "ft"])
-        self.combo_de.setCurrentText("mm")
+        btn_export = QPushButton('Exportar PNG')
+        btn_export.clicked.connect(self._exportar_textura)
+        toolbar.addWidget(btn_export)
 
-        self.combo_para = QComboBox()
-        self.combo_para.addItems(["mm", "cm", "m", "in", "ft"])
-        self.combo_para.setCurrentText("cm")
+        toolbar.addStretch()
+        root.addLayout(toolbar)
 
-        self.label_resultado_unidade = QLabel("0.0000")
-        btn_converter = QPushButton("Converter")
-        btn_converter.clicked.connect(self._converter_unidade)
+        wsl_bar = QHBoxLayout()
+        self.drive_combo = QComboBox()
+        self.drive_combo.setMinimumWidth(100)
+        self.drive_combo.setPlaceholderText('Drive Windows...')
+        wsl_bar.addWidget(QLabel('WSL:'))
+        wsl_bar.addWidget(self.drive_combo)
+        btn_go_drive = QPushButton('Ir')
+        btn_go_drive.clicked.connect(self._ir_para_drive)
+        wsl_bar.addWidget(btn_go_drive)
 
-        layout_unidades.addWidget(QLabel("Valor:"))
-        layout_unidades.addWidget(self.spin_valor)
-        layout_unidades.addWidget(self.combo_de)
-        layout_unidades.addWidget(QLabel("para"))
-        layout_unidades.addWidget(self.combo_para)
-        layout_unidades.addWidget(btn_converter)
-        layout_unidades.addWidget(self.label_resultado_unidade)
-        group_unidades.setLayout(layout_unidades)
-        root.addWidget(group_unidades)
+        fs25_dirs = fs25_mods_paths_wsl()
+        if fs25_dirs:
+            self.fs25_combo = QComboBox()
+            self.fs25_combo.setMinimumWidth(300)
+            self.fs25_combo.setPlaceholderText('FS25 mods...')
+            for d in fs25_dirs:
+                self.fs25_combo.addItem(d)
+            wsl_bar.addWidget(QLabel('FS25:'))
+            wsl_bar.addWidget(self.fs25_combo)
+            btn_go_fs25 = QPushButton('Abrir Mods FS25')
+            btn_go_fs25.clicked.connect(self._ir_para_fs25)
+            wsl_bar.addWidget(btn_go_fs25)
 
-        # --- Geometria 2D ---
-        group_geo2d = QGroupBox("Geometria 2D")
-        layout_geo2d = QVBoxLayout()
+        wsl_bar.addStretch()
+        root.addLayout(wsl_bar)
 
-        # Linha 1: Área do retângulo/quadrado
-        h1 = QHBoxLayout()
-        h1.addWidget(QLabel("Área Retângulo - Largura:"))
-        self.spin_rect_w = QDoubleSpinBox()
-        self.spin_rect_w.setRange(0, 999999)
-        self.spin_rect_w.setDecimals(4)
-        self.spin_rect_w.setValue(100)
-        h1.addWidget(self.spin_rect_w)
-        h1.addWidget(QLabel("x Altura:"))
-        self.spin_rect_h = QDoubleSpinBox()
-        self.spin_rect_h.setRange(0, 999999)
-        self.spin_rect_h.setDecimals(4)
-        self.spin_rect_h.setValue(50)
-        h1.addWidget(self.spin_rect_h)
-        btn_area_rect = QPushButton("Calcular Área")
-        btn_area_rect.clicked.connect(self._calcular_area_retangulo)
-        h1.addWidget(btn_area_rect)
-        self.label_area_rect = QLabel("0")
-        h1.addWidget(self.label_area_rect)
-        layout_geo2d.addLayout(h1)
+        path_bar = QHBoxLayout()
+        self.path_input = QLineEdit()
+        self.path_input.setPlaceholderText(
+            'Cole um caminho (ex: G:\\Users\\... ou /mnt/g/Users/...) e pressione Enter'
+        )
+        self.path_input.returnPressed.connect(self._ir_para_path)
+        path_bar.addWidget(self.path_input)
+        btn_go_path = QPushButton('Ir')
+        btn_go_path.clicked.connect(self._ir_para_path)
+        path_bar.addWidget(btn_go_path)
+        root.addLayout(path_bar)
 
-        # Linha 2: Circunferência/Área Círculo
-        h2 = QHBoxLayout()
-        h2.addWidget(QLabel("Círculo - Raio:"))
-        self.spin_raio = QDoubleSpinBox()
-        self.spin_raio.setRange(0, 999999)
-        self.spin_raio.setDecimals(4)
-        self.spin_raio.setValue(50)
-        h2.addWidget(self.spin_raio)
-        btn_circ = QPushButton("Circunferência")
-        btn_circ.clicked.connect(self._calcular_circunferencia)
-        h2.addWidget(btn_circ)
-        self.label_circ = QLabel("0")
-        h2.addWidget(self.label_circ)
-        btn_area_circ = QPushButton("Área")
-        btn_area_circ.clicked.connect(self._calcular_area_circulo)
-        h2.addWidget(btn_area_circ)
-        self.label_area_circ = QLabel("0")
-        h2.addWidget(self.label_area_circ)
-        layout_geo2d.addLayout(h2)
+        self.label_mod_info = QLabel('Nenhum mod carregado')
+        root.addWidget(self.label_mod_info)
 
-        group_geo2d.setLayout(layout_geo2d)
-        root.addWidget(group_geo2d)
+        self._popular_drives()
 
-        # --- Geometria 3D ---
-        group_geo3d = QGroupBox("Geometria 3D")
-        layout_geo3d = QVBoxLayout()
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Volume cubo/paralelepípedo
-        h3 = QHBoxLayout()
-        h3.addWidget(QLabel("Paralelepípedo - L:"))
-        self.spin_cube_l = QDoubleSpinBox()
-        self.spin_cube_l.setRange(0, 999999)
-        self.spin_cube_l.setDecimals(4)
-        self.spin_cube_l.setValue(100)
-        h3.addWidget(self.spin_cube_l)
-        h3.addWidget(QLabel("x H:"))
-        self.spin_cube_h = QDoubleSpinBox()
-        self.spin_cube_h.setRange(0, 999999)
-        self.spin_cube_h.setDecimals(4)
-        self.spin_cube_h.setValue(100)
-        h3.addWidget(self.spin_cube_h)
-        h3.addWidget(QLabel("x P:"))
-        self.spin_cube_d = QDoubleSpinBox()
-        self.spin_cube_d.setRange(0, 999999)
-        self.spin_cube_d.setDecimals(4)
-        self.spin_cube_d.setValue(100)
-        h3.addWidget(self.spin_cube_d)
-        btn_vol_cube = QPushButton("Volume")
-        btn_vol_cube.clicked.connect(self._calcular_volume_cubo)
-        h3.addWidget(btn_vol_cube)
-        self.label_vol_cube = QLabel("0")
-        h3.addWidget(self.label_vol_cube)
-        layout_geo3d.addLayout(h3)
+        left_panel = QWidget()
+        left_layout = QVBoxLayout()
+        left_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Volume esfera
-        h4 = QHBoxLayout()
-        h4.addWidget(QLabel("Esfera - Raio:"))
-        self.spin_esfera_r = QDoubleSpinBox()
-        self.spin_esfera_r.setRange(0, 999999)
-        self.spin_esfera_r.setDecimals(4)
-        self.spin_esfera_r.setValue(50)
-        h4.addWidget(self.spin_esfera_r)
-        btn_vol_esfera = QPushButton("Volume")
-        btn_vol_esfera.clicked.connect(self._calcular_volume_esfera)
-        h4.addWidget(btn_vol_esfera)
-        self.label_vol_esfera = QLabel("0")
-        h4.addWidget(self.label_vol_esfera)
-        btn_area_esfera = QPushButton("Área Superfície")
-        btn_area_esfera.clicked.connect(self._calcular_area_esfera)
-        h4.addWidget(btn_area_esfera)
-        self.label_area_esfera = QLabel("0")
-        h4.addWidget(self.label_area_esfera)
-        layout_geo3d.addLayout(h4)
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText('Buscar textura...')
+        self.search_input.textChanged.connect(self._filtrar_texturas)
+        left_layout.addWidget(self.search_input)
 
-        # Distância 3D (entre dois pontos)
-        h5 = QHBoxLayout()
-        h5.addWidget(QLabel("Distância 3D: P1("))
-        self.spin_x1 = QDoubleSpinBox()
-        self.spin_x1.setRange(-999999, 999999)
-        self.spin_x1.setDecimals(4)
-        self.spin_x1.setValue(0)
-        h5.addWidget(self.spin_x1)
-        h5.addWidget(QLabel(","))
-        self.spin_y1 = QDoubleSpinBox()
-        self.spin_y1.setRange(-999999, 999999)
-        self.spin_y1.setDecimals(4)
-        self.spin_y1.setValue(0)
-        h5.addWidget(self.spin_y1)
-        h5.addWidget(QLabel(","))
-        self.spin_z1 = QDoubleSpinBox()
-        self.spin_z1.setRange(-999999, 999999)
-        self.spin_z1.setDecimals(4)
-        self.spin_z1.setValue(0)
-        h5.addWidget(self.spin_z1)
-        h5.addWidget(QLabel(") → P2("))
-        self.spin_x2 = QDoubleSpinBox()
-        self.spin_x2.setRange(-999999, 999999)
-        self.spin_x2.setDecimals(4)
-        self.spin_x2.setValue(100)
-        h5.addWidget(self.spin_x2)
-        h5.addWidget(QLabel(","))
-        self.spin_y2 = QDoubleSpinBox()
-        self.spin_y2.setRange(-999999, 999999)
-        self.spin_y2.setDecimals(4)
-        self.spin_y2.setValue(100)
-        h5.addWidget(self.spin_y2)
-        h5.addWidget(QLabel(","))
-        self.spin_z2 = QDoubleSpinBox()
-        self.spin_z2.setRange(-999999, 999999)
-        self.spin_z2.setDecimals(4)
-        self.spin_z2.setValue(100)
-        h5.addWidget(self.spin_z2)
-        h5.addWidget(QLabel(")"))
-        btn_dist3d = QPushButton("Calcular")
-        btn_dist3d.clicked.connect(self._calcular_distancia_3d)
-        h5.addWidget(btn_dist3d)
-        self.label_dist3d = QLabel("0")
-        h5.addWidget(self.label_dist3d)
-        layout_geo3d.addLayout(h5)
+        self.texture_list = QListWidget()
+        self.texture_list.setIconSize(QSize(64, 64))
+        self.texture_list.setSpacing(2)
+        self.texture_list.currentRowChanged.connect(self._on_texture_selected)
+        left_layout.addWidget(QLabel('Texturas'))
+        left_layout.addWidget(self.texture_list)
+        left_panel.setLayout(left_layout)
 
-        group_geo3d.setLayout(layout_geo3d)
-        root.addWidget(group_geo3d)
+        right_panel = QWidget()
+        right_layout = QVBoxLayout()
+        right_layout.setContentsMargins(0, 0, 0, 0)
 
-        # --- Ferramentas Extras ---
-        group_extras = QGroupBox("Ferramentas Extras")
-        layout_extras = QHBoxLayout()
-
-        layout_extras.addWidget(QLabel("Raiz Quadrada:"))
-        self.spin_sqrt = QDoubleSpinBox()
-        self.spin_sqrt.setRange(0, 999999)
-        self.spin_sqrt.setDecimals(4)
-        self.spin_sqrt.setValue(16)
-        layout_extras.addWidget(self.spin_sqrt)
-        btn_sqrt = QPushButton("√")
-        btn_sqrt.clicked.connect(self._calcular_sqrt)
-        layout_extras.addWidget(btn_sqrt)
-        self.label_sqrt = QLabel("0")
-        layout_extras.addWidget(self.label_sqrt)
-
-        layout_extras.addWidget(QLabel("Potência:"))
-        self.spin_base = QDoubleSpinBox()
-        self.spin_base.setRange(-999999, 999999)
-        self.spin_base.setDecimals(4)
-        self.spin_base.setValue(2)
-        layout_extras.addWidget(self.spin_base)
-        self.spin_exp = QSpinBox()
-        self.spin_exp.setRange(-100, 100)
-        self.spin_exp.setValue(3)
-        layout_extras.addWidget(self.spin_exp)
-        btn_pow = QPushButton("x^n")
-        btn_pow.clicked.connect(self._calcular_potencia)
-        layout_extras.addWidget(btn_pow)
-        self.label_pow = QLabel("0")
-        layout_extras.addWidget(self.label_pow)
-
-        group_extras.setLayout(layout_extras)
-        root.addWidget(group_extras)
-
-        # --- Histórico ---
-        group_hist = QGroupBox("Histórico de Cálculos")
-        layout_hist = QVBoxLayout()
-        btn_limpar = QPushButton("Limpar Histórico")
-        btn_limpar.clicked.connect(self._limpar_historico)
-        layout_hist.addWidget(btn_limpar)
-
-        self.table_historico = QTableWidget()
-        self.table_historico.setColumnCount(3)
-        self.table_historico.setHorizontalHeaderLabels(["Hora", "Operação", "Resultado"])
-        self.table_historico.setMaximumHeight(200)
-        layout_hist.addWidget(self.table_historico)
-
-        group_hist.setLayout(layout_hist)
-        root.addWidget(group_hist)
-
-    def _converter_unidade(self) -> None:
-        valor = self.spin_valor.value()
-        de = self.combo_de.currentText()
-        para = self.combo_para.currentText()
-
-        # Tabela de conversão: tudo para mm
-        para_mm = {
-            "mm": 1,
-            "cm": 10,
-            "m": 1000,
-            "in": 25.4,  # polegada
-            "ft": 304.8,  # pé
-        }
-
-        valor_mm = valor * para_mm[de]
-        resultado = valor_mm / para_mm[para]
-
-        self.label_resultado_unidade.setText(f"{resultado:.4f}")
-        self._adicionar_historico(f"{valor} {de} → {para}", f"{resultado:.4f} {para}")
-
-    def _calcular_area_retangulo(self) -> None:
-        w = self.spin_rect_w.value()
-        h = self.spin_rect_h.value()
-        area = w * h
-        self.label_area_rect.setText(f"{area:.4f}")
-        self._adicionar_historico(f"Área Ret. {w}x{h}", f"{area:.4f}")
-
-    def _calcular_circunferencia(self) -> None:
-        r = self.spin_raio.value()
-        circ = 2 * math.pi * r
-        self.label_circ.setText(f"{circ:.4f}")
-        self._adicionar_historico(f"Circunf. (r={r})", f"{circ:.4f}")
-
-    def _calcular_area_circulo(self) -> None:
-        r = self.spin_raio.value()
-        area = math.pi * r * r
-        self.label_area_circ.setText(f"{area:.4f}")
-        self._adicionar_historico(f"Área Circ. (r={r})", f"{area:.4f}")
-
-    def _calcular_volume_cubo(self) -> None:
-        l = self.spin_cube_l.value()
-        h = self.spin_cube_h.value()
-        d = self.spin_cube_d.value()
-        vol = l * h * d
-        self.label_vol_cube.setText(f"{vol:.4f}")
-        self._adicionar_historico(f"Vol. Cubo {l}×{h}×{d}", f"{vol:.4f}")
-
-    def _calcular_volume_esfera(self) -> None:
-        r = self.spin_esfera_r.value()
-        vol = (4 / 3) * math.pi * (r ** 3)
-        self.label_vol_esfera.setText(f"{vol:.4f}")
-        self._adicionar_historico(f"Vol. Esfera (r={r})", f"{vol:.4f}")
-
-    def _calcular_area_esfera(self) -> None:
-        r = self.spin_esfera_r.value()
-        area = 4 * math.pi * (r ** 2)
-        self.label_area_esfera.setText(f"{area:.4f}")
-        self._adicionar_historico(f"Área Esfera (r={r})", f"{area:.4f}")
-
-    def _calcular_distancia_3d(self) -> None:
-        x1, y1, z1 = self.spin_x1.value(), self.spin_y1.value(), self.spin_z1.value()
-        x2, y2, z2 = self.spin_x2.value(), self.spin_y2.value(), self.spin_z2.value()
-        dist = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2)
-        self.label_dist3d.setText(f"{dist:.4f}")
-        self._adicionar_historico(
-            f"Dist. 3D ({x1},{y1},{z1})-({x2},{y2},{z2})", f"{dist:.4f}"
+        self.preview_label = QLabel('Selecione uma textura')
+        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview_label.setMinimumSize(400, 300)
+        self.preview_label.setStyleSheet(
+            'background: #1b1f2a; border: 1px solid #31384a; border-radius: 4px;'
         )
 
-    def _calcular_sqrt(self) -> None:
-        valor = self.spin_sqrt.value()
-        resultado = math.sqrt(valor) if valor >= 0 else 0
-        self.label_sqrt.setText(f"{resultado:.4f}")
-        self._adicionar_historico(f"√{valor}", f"{resultado:.4f}")
+        scroll = QScrollArea()
+        scroll.setWidget(self.preview_label)
+        scroll.setWidgetResizable(True)
+        scroll.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        right_layout.addWidget(QLabel('Preview'))
+        right_layout.addWidget(scroll, 1)
 
-    def _calcular_potencia(self) -> None:
-        base = self.spin_base.value()
-        exp = self.spin_exp.value()
-        resultado = base ** exp
-        self.label_pow.setText(f"{resultado:.4f}")
-        self._adicionar_historico(f"{base}^{exp}", f"{resultado:.4f}")
+        self.info_label = QLabel('')
+        self.info_label.setWordWrap(True)
+        right_layout.addWidget(self.info_label)
 
-    def _adicionar_historico(self, operacao: str, resultado: str) -> None:
-        hora = datetime.now().strftime("%H:%M:%S")
-        row = self.table_historico.rowCount()
-        self.table_historico.insertRow(row)
-        self.table_historico.setItem(row, 0, QTableWidgetItem(hora))
-        self.table_historico.setItem(row, 1, QTableWidgetItem(operacao))
-        self.table_historico.setItem(row, 2, QTableWidgetItem(resultado))
-        self.table_historico.scrollToBottom()
+        action_row = QHBoxLayout()
+        btn_swap = QPushButton('Trocar Textura...')
+        btn_swap.clicked.connect(self._trocar_textura)
+        action_row.addWidget(btn_swap)
+        btn_export = QPushButton('Exportar como PNG')
+        btn_export.clicked.connect(self._exportar_textura)
+        action_row.addWidget(btn_export)
+        right_layout.addLayout(action_row)
 
-    def _limpar_historico(self) -> None:
-        self.table_historico.setRowCount(0)
+        right_panel.setLayout(right_layout)
+
+        splitter.addWidget(left_panel)
+        splitter.addWidget(right_panel)
+        splitter.setSizes([350, 1050])
+        root.addWidget(splitter, 1)
+
+    def _popular_drives(self) -> None:
+        self.drive_combo.clear()
+        for d in listar_drives_wsl():
+            label = f'{d.upper()} ({d})'
+            self.drive_combo.addItem(label, d)
+        if self.drive_combo.count() == 0:
+            self.drive_combo.addItem('Nenhum drive detectado')
+
+    def _ir_para_drive(self) -> None:
+        path = self.drive_combo.currentData()
+        if path and os.path.isdir(path):
+            self._abrir_pasta_com_path(path)
+
+    def _ir_para_fs25(self) -> None:
+        path = self.fs25_combo.currentText()
+        if path and os.path.isdir(path):
+            self._carregar_mod(path)
+
+    def _ir_para_path(self) -> None:
+        raw = self.path_input.text().strip()
+        if not raw:
+            return
+        path = normalizar_path(raw)
+        if os.path.isdir(path):
+            self._carregar_mod(path)
+        elif os.path.isfile(path):
+            self._carregar_mod(path)
+        else:
+            QMessageBox.warning(
+                self, 'Erro', f'Caminho não encontrado:\n{path}'
+            )
+
+    def _abrir_mod(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            'Selecionar Mod (zip ou pasta)',
+            '',
+            'Mod Files (*.zip);;All Files (*)',
+        )
+        if not path:
+            return
+        self._carregar_mod(path)
+
+    def _abrir_pasta(self) -> None:
+        path = QFileDialog.getExistingDirectory(
+            self, 'Selecionar Pasta do Mod'
+        )
+        if not path:
+            return
+        self._carregar_mod(path)
+
+    def _abrir_pasta_com_path(self, path: str) -> None:
+        self._carregar_mod(path)
+
+    def _filtrar_texturas(self, text: str) -> None:
+        text = text.lower()
+        for i in range(self.texture_list.count()):
+            item = self.texture_list.item(i)
+            if item:
+                item.setHidden(text not in item.text().lower())
+
+    def _carregar_mod(self, path: str) -> None:
+        self.mod_path = path
+        self.texture_files.clear()
+        self.texture_list.clear()
+        self.search_input.clear()
+        self.preview_label.clear()
+        self.preview_label.setText('Carregando...')
+        self.info_label.setText('')
+
+        images = []
+        if os.path.isfile(path) and path.endswith('.zip'):
+            import zipfile
+
+            with zipfile.ZipFile(path) as zf:
+                for name in zf.namelist():
+                    ext = os.path.splitext(name)[1].lower()
+                    if ext in IMAGE_EXTENSIONS:
+                        images.append(name)
+                img_count = len(images)
+            self.label_mod_info.setText(
+                f'ZIP: {os.path.basename(path)} ({img_count} imagens)'
+            )
+        elif os.path.isdir(path):
+            for root_dir, _, files in os.walk(path):
+                for f in files:
+                    ext = os.path.splitext(f)[1].lower()
+                    if ext in IMAGE_EXTENSIONS:
+                        rel = os.path.relpath(os.path.join(root_dir, f), path)
+                        images.append(rel)
+            self.label_mod_info.setText(
+                f'Pasta: {os.path.basename(path)} ({len(images)} imagens)'
+            )
+        else:
+            QMessageBox.warning(
+                self, 'Erro', 'Selecione uma pasta de mod ou arquivo .zip'
+            )
+            return
+
+        self.texture_files = sorted(images)
+
+        if not self.texture_files:
+            self.preview_label.setText('Nenhuma imagem encontrada')
+            self.label_mod_info.setText(
+                f'{os.path.basename(path)} (0 imagens)'
+            )
+            return
+
+        for img_rel in self.texture_files:
+            item = QListWidgetItem(img_rel)
+            thumb = self._load_thumbnail(path, img_rel)
+            if thumb:
+                item.setIcon(QIcon(thumb))
+            self.texture_list.addItem(item)
+
+        self.texture_list.setCurrentRow(0)
+
+    def _load_thumbnail(
+        self, mod_path: str, rel_path: str, size: int = 64
+    ) -> QPixmap | None:
+        try:
+            if os.path.isfile(mod_path) and mod_path.endswith('.zip'):
+                import io
+                import zipfile
+
+                with zipfile.ZipFile(mod_path) as zf:
+                    data = zf.read(rel_path)
+                    pil_img = Image.open(io.BytesIO(data))
+            else:
+                full = os.path.join(mod_path, rel_path)
+                pil_img = Image.open(full)
+            pil_img.thumbnail((size, size))
+            return pil_to_pixmap(pil_img)
+        except Exception:
+            return None
+
+    def _load_full_image(
+        self, mod_path: str, rel_path: str
+    ) -> Image.Image | None:
+        try:
+            if os.path.isfile(mod_path) and mod_path.endswith('.zip'):
+                import io
+                import zipfile
+
+                with zipfile.ZipFile(mod_path) as zf:
+                    data = zf.read(rel_path)
+                    return Image.open(io.BytesIO(data))
+            else:
+                full = os.path.join(mod_path, rel_path)
+                return Image.open(full)
+        except Exception as e:
+            QMessageBox.warning(
+                self, 'Erro', f'Não foi possível carregar:\n{rel_path}\n{e}'
+            )
+            return None
+
+    def _on_texture_selected(self, row: int) -> None:
+        if row < 0 or row >= len(self.texture_files):
+            return
+        rel = self.texture_files[row]
+        self.current_texture = rel
+
+        pil_img = self._load_full_image(self.mod_path, rel)
+        if pil_img is None:
+            return
+
+        pixmap = pil_to_pixmap(pil_img)
+        size_str = f'{pil_img.width} x {pil_img.height} px'
+
+        fmt = (
+            pil_img.format or 'DDS'
+            if rel.lower().endswith('.dds')
+            else pil_img.format
+        )
+        fsize = ''
+        if os.path.isfile(self.mod_path) and self.mod_path.endswith('.zip'):
+            import zipfile
+
+            with zipfile.ZipFile(self.mod_path) as zf:
+                info = zf.getinfo(rel)
+                fsize = f', {info.file_size / 1024:.1f} KB'
+        else:
+            full = os.path.join(self.mod_path, rel)
+            fsize = f', {os.path.getsize(full) / 1024:.1f} KB'
+
+        self.info_label.setText(
+            f'{os.path.basename(rel)}\n'
+            f'{size_str}  |  {fmt}{fsize}\n'
+            f'{os.path.dirname(rel)}'
+        )
+
+        max_w = self.preview_label.width() - 20
+        max_h = self.preview_label.height() - 20
+        if pil_img.width > max_w or pil_img.height > max_h:
+            pil_img.thumbnail((max_w, max_h))
+            pixmap = pil_to_pixmap(pil_img)
+
+        self.preview_label.setPixmap(pixmap)
+
+    def _exportar_textura(self) -> None:
+        if not self.current_texture:
+            QMessageBox.information(
+                self, 'Aviso', 'Selecione uma textura primeiro'
+            )
+            return
+
+        pil_img = self._load_full_image(self.mod_path, self.current_texture)
+        if pil_img is None:
+            return
+
+        default_name = (
+            os.path.splitext(os.path.basename(self.current_texture))[0]
+            + '.png'
+        )
+        save_path, _ = QFileDialog.getSaveFileName(
+            self,
+            'Salvar como PNG',
+            default_name,
+            'PNG Image (*.png);;All Files (*)',
+        )
+        if not save_path:
+            return
+
+        try:
+            rgb = (
+                pil_img.convert('RGB')
+                if pil_img.mode not in {'RGB', 'RGBA'}
+                else pil_img
+            )
+            rgb.save(save_path, 'PNG')
+            QMessageBox.information(
+                self, 'Sucesso', f'Textura exportada:\n{save_path}'
+            )
+        except Exception as e:
+            QMessageBox.critical(self, 'Erro', f'Falha ao exportar:\n{e}')
+
+    def _trocar_textura(self) -> None:
+        if not self.current_texture:
+            QMessageBox.information(
+                self, 'Aviso', 'Selecione uma textura primeiro'
+            )
+            return
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            'Selecionar nova textura',
+            '',
+            'Imagens (*.png *.jpg *.jpeg *.bmp *.tga *.dds *.gif);;All Files (*)',
+        )
+        if not file_path:
+            return
+
+        if (
+            isinstance(self.mod_path, str)
+            and os.path.isfile(self.mod_path)
+            and self.mod_path.endswith('.zip')
+        ):
+            QMessageBox.information(
+                self,
+                'Aviso',
+                "Para mods em ZIP, extraia o mod primeiro e use a opção 'Abrir Pasta'.",
+            )
+            return
+
+        try:
+            dst = os.path.join(self.mod_path, self.current_texture)
+            backup = dst + '.bak'
+            if os.path.exists(backup):
+                os.remove(backup)
+            os.rename(dst, backup)
+            shutil.copy2(file_path, dst)
+
+            QMessageBox.information(
+                self,
+                'Sucesso',
+                f'Textura trocada!\nOriginal renomeada para: {os.path.basename(backup)}',
+            )
+
+            row = self.texture_list.currentRow()
+            thumb = self._load_thumbnail(self.mod_path, self.current_texture)
+            if thumb:
+                item = self.texture_list.item(row)
+                if item:
+                    item.setIcon(QIcon(thumb))
+            self._on_texture_selected(row)
+
+        except Exception as e:
+            QMessageBox.critical(
+                self, 'Erro', f'Falha ao trocar textura:\n{e}'
+            )
 
     def _aplicar_tema(self) -> None:
         stylesheet = """
-        QWidget { background: #0f1117; color: #e6e8f0; }
-        QGroupBox { border: 1px solid #31384a; border-radius: 4px; margin-top: 10px; padding-top: 10px; color: #e6e8f0; }
-        QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0 3px; }
+        QWidget { background: #0f1117; color: #e6e8f0; font-size: 13px; }
         QPushButton { background: #238636; color: #fff; border: 1px solid #2ea043; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
         QPushButton:hover { background: #2ea043; }
         QPushButton:pressed { background: #1a6e1a; }
-        QDoubleSpinBox, QSpinBox, QComboBox, QLineEdit { background: #11141d; border: 1px solid #31384a; padding: 6px; border-radius: 4px; }
-        QTableWidget { gridline-color: #2a3040; }
-        QHeaderView::section { background: #1b1f2a; color: #e6e8f0; padding: 6px; }
-        QTableWidget::item:selected { background: #238636; }
+        QListWidget { background: #11141d; border: 1px solid #31384a; border-radius: 4px; padding: 4px; }
+        QListWidget::item { padding: 4px; border-radius: 2px; }
+        QListWidget::item:selected { background: #238636; }
+        QListWidget::item:hover { background: #1b1f2a; }
+        QLineEdit, QComboBox { background: #11141d; border: 1px solid #31384a; padding: 5px 8px; border-radius: 4px; color: #e6e8f0; }
+        QComboBox::drop-down { border: none; }
+        QComboBox QAbstractItemView { background: #11141d; color: #e6e8f0; selection-background-color: #238636; }
+        QScrollArea { border: none; }
+        QLabel { color: #e6e8f0; }
+        QSplitter::handle { background: #31384a; width: 2px; }
         """
         self.setStyleSheet(stylesheet)
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = Calc3D()
-    window.show()
-    sys.exit(app.exec())
-
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        run_batch(sys.argv[1])
+    else:
+        app = QApplication(sys.argv)
+        window = TextureViewer()
+        window.show()
+        sys.exit(app.exec())

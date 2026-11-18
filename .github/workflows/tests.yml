@@ -1,0 +1,58 @@
+name: Multi-Platform Test Suite
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-platforms:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar Dependências de Sistema (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends build-essential patchelf libegl1 libgl1
+          sudo apt-get install -y upx || sudo apt-get install -y upx-ucl || true
+
+      - name: Instalar Dependências de Sistema (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install upx || true
+
+      - name: Instalar Dependências de Sistema (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install upx --no-progress || true
+
+      - name: Instalar Poetry
+        run: pip install poetry
+
+      - name: Instalar Dependências do Orange
+        run: poetry install --with dev
+
+      - name: Executar Diagnóstico de Ferramentas (Doctor)
+        run: poetry run orange doctor
+
+      - name: Executar Testes do Core
+        run: poetry run pytest tests/builder/ tests/cache/ tests/cli/ tests/compiler/ tests/config/ tests/platform/ tests/plugins/ tests/reports/

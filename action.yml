@@ -1,0 +1,150 @@
+name: 'Orange Framework Build'
+description: 'Compilação, otimização com Cython/UPX e empacotamento standalone de aplicações Python.'
+author: 'Anderson Rodrigues <eusouanderson@outlook.com>'
+
+inputs:
+  source:
+    description: 'Diretório com o código-fonte Python da aplicação.'
+    required: false
+    default: './src'
+  output:
+    description: 'Diretório de saída para o executável gerado.'
+    required: false
+    default: './dist'
+  profile:
+    description: 'Perfil de compilação (development, release, production ou custom).'
+    required: false
+    default: 'production'
+  compile-all:
+    description: 'Se true, transpila e compila todos os arquivos .py do projeto para C nativo.'
+    required: false
+    default: 'false'
+  python-version:
+    description: 'Versão do Python a ser utilizada no build.'
+    required: false
+    default: '3.12'
+  platform:
+    description: 'Plataforma alvo do build (auto, linux, windows, macos).'
+    required: false
+    default: 'auto'
+  orange-version:
+    description: 'Versão do Orange a instalar (ex: latest, 0.2.0 ou local).'
+    required: false
+    default: 'latest'
+  config-file:
+    description: 'Caminho para o arquivo de configuração orange.toml.'
+    required: false
+    default: 'orange.toml'
+  cache:
+    description: 'Habilita cache inteligente de dependências e artefatos compilados.'
+    required: false
+    default: 'true'
+  upload-artifact:
+    description: 'Se true, faz upload automático do executável gerado como artefato do workflow.'
+    required: false
+    default: 'true'
+  artifact-name:
+    description: 'Nome do artefato para upload.'
+    required: false
+    default: 'application-binary'
+
+outputs:
+  executable-path:
+    description: 'Caminho absoluto ou relativo para o executável gerado.'
+    value: ${{ steps.build.outputs.executable-path }}
+  build-status:
+    description: 'Status do build (success ou failed).'
+    value: ${{ steps.build.outputs.build-status }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    # Instalação de ferramentas de build por plataforma
+    - name: Instalar dependências de sistema (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends build-essential patchelf libegl1 libgl1
+        sudo apt-get install -y upx || sudo apt-get install -y upx-ucl || true
+
+    - name: Instalar dependências de sistema (macOS)
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        brew install upx || true
+
+    - name: Instalar dependências de sistema (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        choco install upx --no-progress || true
+
+    # Cache de compilação do Orange (.orange/cache)
+    - name: Restaurar Cache do Orange
+      if: inputs.cache == 'true'
+      uses: actions/cache@v4
+      with:
+        path: .orange/cache
+        key: orange-cache-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles(inputs.config-file, format('{0}/**/*.py', inputs.source)) }}
+        restore-keys: |
+          orange-cache-${{ runner.os }}-${{ inputs.python-version }}-
+          orange-cache-${{ runner.os }}-
+
+    # Instalação do Orange CLI
+    - name: Instalar Orange Framework
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        if [ "${{ inputs.orange-version }}" = "local" ] || [ -f "pyproject.toml" ] && grep -q "orange-micro-framework" pyproject.toml 2>/dev/null; then
+          python -m pip install -e .
+        elif [ "${{ inputs.orange-version }}" = "latest" ]; then
+          python -m pip install orange-framework || python -m pip install -e .
+        else
+          python -m pip install orange-framework=="${{ inputs.orange-version }}" || python -m pip install -e .
+        fi
+
+    - name: Executar Diagnóstico de Ambiente (Doctor)
+      shell: bash
+      run: |
+        orange doctor
+
+    - name: Executar Build com Orange
+      id: build
+      shell: bash
+      run: |
+        FLAGS=""
+        if [ "${{ inputs.compile-all }}" = "true" ]; then
+          FLAGS="$FLAGS --compile-all"
+        fi
+        if [ -n "${{ inputs.profile }}" ]; then
+          FLAGS="$FLAGS --profile ${{ inputs.profile }}"
+        fi
+        if [ -n "${{ inputs.output }}" ]; then
+          FLAGS="$FLAGS --output ${{ inputs.output }}"
+        fi
+        if [ -f "${{ inputs.config-file }}" ]; then
+          FLAGS="$FLAGS -c ${{ inputs.config-file }}"
+        fi
+
+        echo "Executando: orange build $FLAGS"
+        orange build $FLAGS
+        echo "build-status=success" >> $GITHUB_OUTPUT
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          EXE=$(python -c "from pathlib import Path; print(next((str(p) for p in Path('${{ inputs.output }}').rglob('*.exe') if p.is_file()), ''))")
+        else
+          EXE=$(python3 -c "import os; from pathlib import Path; ignored={'.json','.html','.zip','.gz','.whl','.txt','.spec'}; print(next((str(p) for p in Path('${{ inputs.output }}').rglob('*') if p.is_file() and p.suffix.lower() not in ignored and os.access(p, os.X_OK)), ''))" 2>/dev/null || python -c "import os; from pathlib import Path; ignored={'.json','.html','.zip','.gz','.whl','.txt','.spec'}; print(next((str(p) for p in Path('${{ inputs.output }}').rglob('*') if p.is_file() and p.suffix.lower() not in ignored and os.access(p, os.X_OK)), ''))")
+        fi
+        echo "executable-path=$EXE" >> $GITHUB_OUTPUT
+
+    - name: Upload de Artefato do Executável
+      if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}-${{ runner.os }}
+        path: ${{ inputs.output }}/

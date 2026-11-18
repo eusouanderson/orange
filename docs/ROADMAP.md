@@ -129,7 +129,8 @@ Este documento detalha o plano de desenvolvimento para Orange Framework, dividid
 - **Exemplo:**
   ```python
   from concurrent.futures import ProcessPoolExecutor
-  
+
+
   def calcular_lote_distancias_paralelo(self, pontos_3d: list) -> list:
       """Processa 1000+ pontos em paralelo"""
       with ProcessPoolExecutor(max_workers=4) as executor:
