@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh" 2>/dev/null || true
+
+echo "🍊 [Husky] Executando validações rápidas de pré-commit..."
+python3 scripts/verify_repo.py --quick

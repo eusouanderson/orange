@@ -3,17 +3,33 @@
 OS := $(shell uname -s)
 
 .DEFAULT_GOAL := help
-.PHONY: help build build-local start test test-framework test-app test-cov test-performance test-fast test-core watch
+.PHONY: help build build-local start test test-framework test-app test-cov test-performance test-fast test-core watch hooks verify lint format
 
 help:
 	@echo "Orange Framework - Comandos disponíveis:"
 	@echo "  make help             Exibe esta mensagem de ajuda"
+	@echo "  make hooks            Configura e ativa os hooks do Husky no Git"
+	@echo "  make verify           Executa a verificação completa de pré-envio"
+	@echo "  make lint             Executa linter e formatação com Ruff"
 	@echo "  make start            Executa o aplicativo em modo dev"
 	@echo "  make build            Compila e gera executável"
 	@echo "  make test             Executa todos os testes"
 	@echo "  make test-core        Executa testes dos módulos do Orange Core"
 	@echo "  make test-fast        Executa testes rápidos"
 	@echo "  make watch            Inicia watch mode"
+
+hooks:
+	@echo "Configurando hooks do Husky no Git..."
+	git config core.hooksPath .husky
+	chmod +x .husky/pre-commit .husky/pre-push .husky/_/husky.sh
+	@echo "✅ Hooks do Husky ativados com sucesso!"
+
+verify:
+	@python3 scripts/verify_repo.py
+
+lint:
+	@poetry run ruff check --fix
+	@poetry run ruff format
 
 # Valores padrão podem ser sobrescritos na linha de comando, ex:
 # make build TAG=v1.2.3 FLAGS="--compile-all"
