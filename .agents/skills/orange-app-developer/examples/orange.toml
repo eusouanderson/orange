@@ -1,0 +1,48 @@
+# =====================================================================
+# Orange Framework - Modelo de Configuração de Referência para Aplicações
+# =====================================================================
+
+[project]
+name = "MyAwesomeApp"
+version = "1.0.0"
+source = "./src"
+entrypoint = "./src/core/main.py"
+description = "Aplicação profissional de alta performance construída com Orange Framework"
+authors = ["Desenvolvedor <dev@exemplo.com>"]
+
+[build]
+profile = "production"
+compile_all = false
+clean = true
+output = "./dist"
+target_name = "awesome_app"
+
+[compiler]
+cython = true
+optimization = 3
+c_compiler = "auto"
+language_level = 3
+type_hints = true
+extra_cflags = []
+
+[packaging]
+pyinstaller = true
+onefile = true
+upx = true
+console = true
+hidden_imports = []
+add_data = []
+
+[cache]
+enabled = true
+directory = ".orange/cache"
+
+[reports]
+enabled = true
+format = ["terminal", "json", "html"]
+output_dir = "./dist/reports"
+
+[platforms]
+linux = true
+windows = true
+macos = true

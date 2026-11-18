@@ -244,6 +244,11 @@ src/**/*.c
 orange/**/*.c
 *.c
 
+# Orange Framework local cache and artifacts
+.orange/
+dist/
+dist_test/
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
